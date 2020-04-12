@@ -169,7 +169,7 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 				tree.getCodeBlock().accept(this, value);
 			}
 		}else {
-			System.out.println("Incompatiable type for FOR loop");
+			System.err.println("Incompatiable type for FOR loop");
 		}
 		return null;
 	}
