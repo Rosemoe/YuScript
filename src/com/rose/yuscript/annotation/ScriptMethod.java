@@ -1,5 +1,5 @@
-/**
- * This Java File is Created By Rose
+/*
+  This Java File is Created By Rose
  */
 package com.rose.yuscript.annotation;
 
@@ -11,9 +11,9 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(METHOD)
-/**
- * @author Rose
- *
+/*
+  @author Rose
+
  */
 public @interface ScriptMethod {
 	

@@ -1,5 +1,5 @@
-/**
- * This Java File is Created By Rose
+/*
+  This Java File is Created By Rose
  */
 package com.rose.yuscript;
 
@@ -114,6 +114,7 @@ public class YuContext {
 	 * Create a new context from the given context
 	 * @param context The source context.Can not be null
 	 */
+	@SuppressWarnings("CopyConstructorMissesField")
 	public YuContext(YuContext context) {
 		this(context.getSession());
 		localVariables.putAll(context.localVariables);

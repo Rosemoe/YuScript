@@ -1,5 +1,5 @@
-/**
- * This Java File is Created By Rose
+/*
+  This Java File is Created By Rose
  */
 package com.rose.yuscript.functions;
 
@@ -64,11 +64,7 @@ public class FunctionManager {
 	}
 	
 	public void addFunction(Function function) {
-		List<Function> list = functionMap.get(function.getName());
-		if(list == null) {
-			list = new ArrayList<>();
-			functionMap.put(function.getName(), list);
-		}
+		List<Function> list = functionMap.computeIfAbsent(function.getName(), k -> new ArrayList<>());
 		if(list.contains(function)) {
 			throw new IllegalArgumentException("Function has been added");
 		}

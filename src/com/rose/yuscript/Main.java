@@ -1,5 +1,5 @@
-/**
- * This Java File is Created By Rose
+/*
+  This Java File is Created By Rose
  */
 package com.rose.yuscript;
 
@@ -18,7 +18,7 @@ public class Main {
 		br.close();
 		String str = sb.toString();
 		YuInterpreter i = new YuInterpreter(0);
-		i.eval("syso(123 + \"+\" + 789)");
+		i.eval(str);
 	}
 
 }

@@ -1,10 +1,9 @@
-/**
- * This Java File is Created By Rose
+/*
+  This Java File is Created By Rose
  */
 package com.rose.yuscript;
 
 import java.lang.reflect.Array;
-import java.util.Iterator;
 import java.util.List;
 
 import com.rose.yuscript.functions.Function;
@@ -65,7 +64,7 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 		eval(tree,new YuContext(getSession()));
 	}
 	
-	public void eval(YuTree tree,YuContext context) throws Throwable {
+	public void eval(YuTree tree,YuContext context) {
 		if(tree == null || context == null) {
 			throw new IllegalArgumentException("argument(s) can not be null");
 		}
@@ -107,13 +106,11 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 			}
 			value.addCodeBlock(block);
 			child.accept(this, value);
-			if(block != null) {
-				boolean used = value.isCodeBlockUsed();
-				if(block != YuContext.NO_CODE_BLOCK && used) {
-					i++;
-				}
-				value.popCodeBlock();
+			boolean used = value.isCodeBlockUsed();
+			if(block != YuContext.NO_CODE_BLOCK && used) {
+				i++;
 			}
+			value.popCodeBlock();
 			if(value.isStopFlagSet()) {
 				break;
 			}
@@ -142,7 +139,7 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 		try {
 			return Long.parseLong(strF);
 		}catch (NumberFormatException e) {
-			return null;
+			return 0L;
 		}
 	}
 
@@ -163,12 +160,10 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 				}
 				tree.getCodeBlock().accept(this, value);
 			}
-		}else if(right != null && Iterable.class.isInstance(right)) {
+		}else if(right instanceof Iterable) {
 			Iterable<?> r = (Iterable<?>)right;
-			Iterator<?> i = r.iterator();
-			while(i.hasNext()) {
-				Object val = i.next();
-				if(tree.getDest().getType() == YuValue.TYPE_VAR) {
+			for (Object val : r) {
+				if (tree.getDest().getType() == YuValue.TYPE_VAR) {
 					value.setVariable(tree.getDest().getVariableName(), val);
 				}
 				tree.getCodeBlock().accept(this, value);

@@ -1,5 +1,5 @@
-/**
- * This Java File is Created By Rose
+/*
+  This Java File is Created By Rose
  */
 package com.rose.yuscript.tree;
 
@@ -126,8 +126,6 @@ public class YuValue implements YuNode {
 	
 	/**
 	 * Get value
-	 * @param context
-	 * @return
 	 */
 	public Object getValue(YuContext context) {
 		switch(getType()) {

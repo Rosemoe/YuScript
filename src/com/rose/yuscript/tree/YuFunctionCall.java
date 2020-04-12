@@ -1,5 +1,5 @@
-/**
- * This Java File is Created By Rose
+/*
+  This Java File is Created By Rose
  */
 package com.rose.yuscript.tree;
 
@@ -22,7 +22,7 @@ public class YuFunctionCall implements YuNode {
 	}
 	
 	public YuFunctionCall() {
-		arguments = new ArrayList<YuExpression>();
+		arguments = new ArrayList<>();
 	}
 	
 	public void addArgument(YuExpression expression) {

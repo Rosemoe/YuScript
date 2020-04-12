@@ -1,5 +1,5 @@
-/**
- * This Java File is Created By Rose
+/*
+  This Java File is Created By Rose
  */
 package com.rose.yuscript.tree;
 
@@ -246,11 +246,9 @@ public final class YuTree {
 			YuExpression expr = parseExpression();
 			call.addArgument(expr);
 			tokenizer.nextToken();
-			if(tokenizer.getToken() == COMMA) {
-				
-			}else if(tokenizer.getToken() == RPAREN) {
+			if(tokenizer.getToken() == RPAREN) {
 				break;
-			}else {
+			}else if(tokenizer.getToken() != COMMA){
 				throw new YuSyntaxError();
 			}
 		}

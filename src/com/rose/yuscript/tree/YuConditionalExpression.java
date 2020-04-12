@@ -1,5 +1,5 @@
-/**
- * This Java File is Created By Rose
+/*
+  This Java File is Created By Rose
  */
 package com.rose.yuscript.tree;
 
@@ -64,7 +64,7 @@ public class YuConditionalExpression implements YuNode {
 			switch(operator) {
 			case ANDAND:
 				if(condition) {
-					condition = condition && getChildren().get(i + 1).getValue(context);
+					condition = getChildren().get(i + 1).getValue(context);
 				}else {
 					break loop;
 				}
@@ -73,7 +73,7 @@ public class YuConditionalExpression implements YuNode {
 				if(condition) {
 					break loop;
 				}else {
-					condition = condition || getChildren().get(i + 1).getValue(context);
+					condition = getChildren().get(i + 1).getValue(context);
 				}
 			}
 		}

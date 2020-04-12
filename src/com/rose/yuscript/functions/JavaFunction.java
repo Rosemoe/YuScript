@@ -1,4 +1,4 @@
-/**
+/*
  * This Java File is Created By Rose
  */
 package com.rose.yuscript.functions;
@@ -20,7 +20,7 @@ public class JavaFunction implements Function {
 	private int argCount;
 	private String name;
 	private boolean firstRtv;
-	
+
 	public JavaFunction(Method method) {
 		this.method = method;
 		params = method.getParameterTypes();
@@ -44,12 +44,12 @@ public class JavaFunction implements Function {
 		firstRtv = method.getAnnotation(ScriptMethod.class).returnValueAtBegin();
 		this.name = method.getName();
 	}
-	
+
 	public JavaFunction(Method method,String name) {
 		this(method);
 		this.name = name;
 	}
-	
+
 	@Override
 	public String getName() {
 		return this.name;
@@ -59,7 +59,7 @@ public class JavaFunction implements Function {
 	public int getArgumentCount() {
 		return argCount;
 	}
-	
+
 	private static Object get(YuExpression expr,Class<?> clazz,YuContext context) {
 		if(clazz == YuExpression.class) {
 			return expr;
@@ -78,6 +78,7 @@ public class JavaFunction implements Function {
 			YuExpression rt;
 			Object value;
 			if(firstRtv) {
+				int pointerArgument = 1;
 				for(int i = 0;i < params.length;i++) {
 					if(params[i].isArray()) {
 						if(params[i] == Object[].class) {
@@ -94,11 +95,21 @@ public class JavaFunction implements Function {
 							args[i] = array;
 						}
 					}else {
-						args[i] = get(i + 1 >= arguments.size() ? null : arguments.get(i + 1), params[i], context);
+						YuExpression expr = arguments.get(pointerArgument);
+						if(params[i] == YuExpression.class) {
+							args[i] = expr;
+							pointerArgument++;
+						}else if(params[i] == Object.class) {
+							args[i] = expr.getValue(context);
+							pointerArgument++;
+						}else if(params[i] == YuContext.class) {
+							args[i] = context;
+						}
 					}
 				}
 				rt = arguments.get(0);
 			}else {
+				int pointerArgument = 0;
 				for(int i = 0;i < params.length;i++) {
 					if(params[i].isArray()) {
 						if(params[i] == Object[].class) {
@@ -115,7 +126,16 @@ public class JavaFunction implements Function {
 							args[i] = array;
 						}
 					}else {
-						args[i] = get(i >= arguments.size() ? null : arguments.get(i), params[i], context);
+						YuExpression expr = arguments.get(pointerArgument);
+						if(params[i] == YuExpression.class) {
+							args[i] = expr;
+							pointerArgument++;
+						}else if(params[i] == Object.class) {
+							args[i] = expr.getValue(context);
+							pointerArgument++;
+						}else if(params[i] == YuContext.class) {
+							args[i] = context;
+						}
 					}
 				}
 				rt = arguments.get(arguments.size() - 1);
@@ -141,7 +161,7 @@ public class JavaFunction implements Function {
 						}
 						args[i] = array;
 					}else {
-						args[i] = arguments.toArray(new YuExpression[arguments.size()]);
+						args[i] = arguments.toArray(new YuExpression[0]);
 					}
 				}else {
 					args[i] = get(i >= arguments.size() ? null : arguments.get(i),  params[i], context);
@@ -150,5 +170,5 @@ public class JavaFunction implements Function {
 			method.invoke(null, args);
 		}
 	}
-	
+
 }
