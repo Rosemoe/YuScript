@@ -84,13 +84,13 @@ public class JavaFunction implements Function {
 					if(params[i].isArray()) {
 						if(params[i] == Object[].class) {
 							Object[] array = new Object[arguments.size() - 1];
-							for(int j = 1;j < array.length;j++) {
+							for(int j = 1;j < array.length + 1;j++) {
 								array[j - 1] = arguments.get(j).getValue(context);
 							}
 							args[i] = array;
 						}else {
 							YuExpression[] array = new YuExpression[arguments.size() - 1];
-							for(int j = 1;j < array.length ;j++) {
+							for(int j = 1;j < array.length + 1;j++) {
 								array[j - 1] = arguments.get(j);
 							}
 							args[i] = array;
@@ -115,13 +115,13 @@ public class JavaFunction implements Function {
 					if(params[i].isArray()) {
 						if(params[i] == Object[].class) {
 							Object[] array = new Object[arguments.size() - 1];
-							for(int j = 0;j < array.length;j++) {
+							for(int j = 0;j < array.length - 1;j++) {
 								array[j] = arguments.get(j).getValue(context);
 							}
 							args[i] = array;
 						}else {
 							YuExpression[] array = new YuExpression[arguments.size() - 1];
-							for(int j = 0;j < array.length;j++) {
+							for(int j = 0;j < array.length - 1;j++) {
 								array[j] = arguments.get(j);
 							}
 							args[i] = array;

@@ -19,7 +19,20 @@ public class Main {
 			"break\n" +
 			"}\n" +
 			"syso(\"来自\" + a)" +
-			"}";
+			"}\n" +
+			"cls(\"int[]\",class)\n" +
+			"syso(class)\n" +
+			"javanew(b,\"java.lang.StringBuilder\")\n" +
+			"syso(b)\n" +
+			"java(b,b,\"StringBuilder.append\",\"String\",233)\n" +
+			"syso(b)\n" +
+			"javax(null,b,\"StringBuilder\",\"setLength\",\"int\",1)\n" +
+			"syso(b)\n" +
+			"nsz(50,\"byte\",arr)" +
+			"javass(b,\"AbstractStringBuilder\",\"value\",arr)\n" +
+			"syso(b)\n" +
+			"javags(v,b,\"AbstractStringBuilder\",\"value\")\n" +
+			"syso(v)";
 
 	public static void main(String[] args){
 		YuInterpreter i = new YuInterpreter(0);

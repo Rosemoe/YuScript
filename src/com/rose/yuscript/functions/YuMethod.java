@@ -3,7 +3,7 @@
  */
 package com.rose.yuscript.functions;
 
-import java.lang.reflect.Array;
+import java.lang.reflect.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
@@ -243,8 +243,175 @@ public class YuMethod {
 
 	@ScriptMethod
 	public static Object nsz(Object size,Object type) {
-		//TODO wait for ClassManager to complete
+		return Array.newInstance(ClassManager.findClass(getString(type)),getInt(size));
+	}
+
+	@ScriptMethod
+	public static Class<?> cls(Object name) {
+		return ClassManager.findClass(getString(name));
+	}
+
+	private static Object performCast(Object obj,Class<?> clazz) {
+		if(clazz == int.class || clazz == Integer.class) {
+			return getInt(obj);
+		}
+		if(clazz == long.class || clazz == Long.class) {
+			return Long.parseLong(getString(obj));
+		}
+		if(clazz == boolean.class || clazz == Boolean.class) {
+			return getBool(obj);
+		}
+		if(clazz == float.class || clazz == Float.class) {
+			return Float.parseFloat(getString(obj));
+		}
+		if(clazz == double.class || clazz == Double.class) {
+			return Double.parseDouble(getString(obj));
+		}
+		if(clazz == byte.class || clazz == Byte.class) {
+			return (byte)getInt(obj);
+		}
+		if(clazz == char.class || clazz == Character.class) {
+			return (char)getInt(obj);
+		}
+		if(clazz == short.class || clazz == Short.class) {
+			return (short)getInt(obj);
+		}
+		if(clazz == String.class) {
+			return getString(obj);
+		}
+		if(clazz == CharSequence.class) {
+			return getCharSeq(obj);
+		}
+		return clazz.cast(obj);
+	}
+
+	private static Class<?> getClass(Object obj) {
+		if(obj instanceof Class) {
+			return (Class<?>)obj;
+		}else{
+			return ClassManager.findClass(getString(obj));
+		}
+	}
+
+	@ScriptMethod(returnValueAtBegin = true)
+	public static Object javanew(Object[] args) {
+		try {
+			Class<?> clazz = getClass(args[0]);
+			if((args.length & 1) != 0) {
+				int length = (args.length - 1) >> 1;
+				Class<?>[] types = new Class[length];
+				Object[] arguments = new Object[length];
+				for(int i = 0,j = 1,k = 2;i < length;i++,j += 2,k += 2) {
+					types[i] = ClassManager.findClass(getString(args[j]));
+					arguments[i] = performCast(args[k],types[i]);
+				}
+				Constructor<?> constructor = clazz.getDeclaredConstructor(types);
+				constructor.setAccessible(true);
+				return constructor.newInstance(arguments);
+			}else{
+				System.err.println("javanew():Argument count illegal");
+				return null;
+			}
+		}catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	@ScriptMethod(returnValueAtBegin = true)
+	public static Object java(Object[] args) {
+		try{
+			String str = getString(args[1]);
+			int ix = str.lastIndexOf(".");
+			Class<?> clazz = ClassManager.findClass(str.substring(0,ix));
+			String name = str.substring(ix + 1);
+			if((args.length & 1) == 0) {
+				int length = (args.length - 2) >> 1;
+				Class<?>[] types = new Class[length];
+				Object[] arguments = new Object[length];
+				for(int i = 0,j = 2,k = 3;i < length;i++,j += 2,k += 2) {
+					types[i] = ClassManager.findClass(getString(args[j]));
+					arguments[i] = performCast(args[k],types[i]);
+				}
+				Method method = clazz.getDeclaredMethod(name,types);
+				method.setAccessible(true);
+				return method.invoke(args[0],arguments);
+			}else{
+				System.err.println("java():Argument count illegal");
+				return null;
+			}
+		}catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	@ScriptMethod(returnValueAtBegin = true)
+	public static Object javax(Object[] args) {
+		//instance,class,name,args...
+		try{
+			Class<?> clazz = getClass(args[1]);
+			String name = getString(args[2]);
+			if((args.length & 1) != 0) {
+				int length = (args.length - 3) >> 1;
+				Class<?>[] types = new Class[length];
+				Object[] arguments = new Object[length];
+				for(int i = 0,j = 3,k = 4;i < length;i++,j += 2,k += 2) {
+					types[i] = ClassManager.findClass(getString(args[j]));
+					arguments[i] = performCast(args[k],types[i]);
+				}
+				Method method = clazz.getDeclaredMethod(name,types);
+				method.setAccessible(true);
+				return method.invoke(args[0],arguments);
+			}else{
+				System.err.println("javax():Argument count illegal");
+				return null;
+			}
+		}catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	@ScriptMethod
+	public static Object[] clssm(Object clazz, Object name) {
+		String n = getString(name);
+		Class<?> c = getClass(clazz);
+		switch (n) {
+			case "init":
+				return c.getDeclaredConstructors();
+			case "field":
+				return c.getDeclaredFields();
+			case "method":
+				return c.getDeclaredMethods();
+		}
 		return null;
+	}
+
+	@ScriptMethod(returnValueAtBegin = true)
+	public static Object javags(Object obj, Object clazz, Object name) throws NoSuchFieldException, IllegalAccessException, IllegalArgumentException {
+		Class<?> klass = getClass(clazz);
+		Field field = klass.getDeclaredField(getString(name));
+		field.setAccessible(true);
+		return field.get(obj);
+	}
+
+	@ScriptMethod
+	public static void javass(Object obj, Object clazz, Object name, Object value) throws NoSuchFieldException, IllegalAccessException, IllegalArgumentException, SecurityException {
+		Class<?> klass = getClass(clazz);
+		Field field = klass.getDeclaredField(getString(name));
+		field.setAccessible(true);
+		field.set(obj, performCast(value,field.getType()));
+	}
+
+	@ScriptMethod
+	public static Class<?> cls(Object loader,Object name) {
+		try {
+			return ((ClassLoader)loader).loadClass(getString(name));
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	@ScriptMethod
@@ -342,6 +509,16 @@ public class YuMethod {
 			return "null";
 		}else if(p instanceof String) {
 			return (String)p;
+		}else {
+			return String.valueOf(p);
+		}
+	}
+
+	private static CharSequence getCharSeq(Object p) {
+		if(p == null) {
+			return "null";
+		}else if(p instanceof CharSequence) {
+			return (CharSequence) p;
 		}else {
 			return String.valueOf(p);
 		}
