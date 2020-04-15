@@ -15,11 +15,11 @@ import com.rose.yuscript.tree.YuValue;
 
 public class JavaFunction implements Function {
 
-	private Method method;
-	private Class<?>[] params;
+	private final Method method;
+	private final Class<?>[] params;
 	private int argCount;
 	private String name;
-	private boolean firstRtv;
+	private final boolean firstRtv;
 
 	public JavaFunction(Method method) {
 		this.method = method;
@@ -42,7 +42,8 @@ public class JavaFunction implements Function {
 			argCount++;
 		}
 		firstRtv = method.getAnnotation(ScriptMethod.class).returnValueAtBegin();
-		this.name = method.getName();
+		String specialName = method.getAnnotation(ScriptMethod.class).scriptEnvName();
+		this.name = specialName.equals("@DEFAULT") ? method.getName() : specialName;
 	}
 
 	public JavaFunction(Method method,String name) {

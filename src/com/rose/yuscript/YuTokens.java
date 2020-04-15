@@ -5,6 +5,7 @@ package com.rose.yuscript;
 
 /**
  * @author Rose
+ * Tokens of yu language
  */
 public enum YuTokens {
 	DOT,//.

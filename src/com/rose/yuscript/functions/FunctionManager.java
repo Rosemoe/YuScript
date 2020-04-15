@@ -15,17 +15,24 @@ import com.rose.yuscript.annotation.ScriptMethod;
 
 /**
  * @author Rose
- *
+ * A manager that holds all script functions which will used by interpreter
  */
 public class FunctionManager {
 
-	private Map<String,List<Function>> functionMap;
-	
+	private final Map<String,List<Function>> functionMap;
+
+	/**
+	 * Create a FunctionManager and add all basic functions
+	 */
 	public FunctionManager() {
 		functionMap = new HashMap<>();
 		addFunctionsFromClass(YuMethod.class);
 	}
-	
+
+	/**
+	 * Add all script functions of a class
+	 * @param clazz The class
+	 */
 	public void addFunctionsFromClass(Class<?> clazz) {
 		Method[] methods = clazz.getMethods();
 		for(Method method : methods) {
@@ -34,7 +41,17 @@ public class FunctionManager {
 			}
 		}
 	}
-	
+
+	/**
+	 * Make this method as a script function
+	 * NOTE:
+	 * The method must be public,static and non-abstract and with a ScriptMethod annotation.
+	 * Otherwise,it will throw a IllegalArgumentException.
+	 * NOTE:
+	 * One method could be added for several times
+	 * DOT NOT add a method twice or more
+	 * @param method The method to add
+	 */
 	public void addFunctionFromMethod(Method method) {
 		if((method.getModifiers() & Modifier.PUBLIC) == 0) {
 			throw new IllegalArgumentException("Only public method can be added");
@@ -50,11 +67,19 @@ public class FunctionManager {
 		}
 		addFunction(new JavaFunction(method));
 	}
-	
+
+	/**
+	 * Remove all functions with the given name
+	 * @param name function name
+	 */
 	public void removeFunctions(String name) {
 		functionMap.remove(name);
 	}
-	
+
+	/**
+	 * Remove the given function
+	 * @param function Function to remove
+	 */
 	public void removeFunction(Function function) {
 		List<Function> list = functionMap.get(function.getName());
 		if(list == null) {
@@ -62,7 +87,11 @@ public class FunctionManager {
 		}
 		list.remove(function);
 	}
-	
+
+	/**
+	 * Add a new function
+	 * @param function New function
+	 */
 	public void addFunction(Function function) {
 		List<Function> list = functionMap.computeIfAbsent(function.getName(), k -> new ArrayList<>());
 		if(list.contains(function)) {
@@ -70,7 +99,12 @@ public class FunctionManager {
 		}
 		list.add(function);
 	}
-	
+
+	/**
+	 * Get functions with the given name
+	 * @param name function name
+	 * @return An unmodifiable list of functions with the given name
+	 */
 	public List<Function> getFunctions(String name) {
 		List<Function> functions = functionMap.get(name);
 		return Collections.unmodifiableList(functions != null ? functions : Collections.emptyList());

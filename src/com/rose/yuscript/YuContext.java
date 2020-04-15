@@ -16,9 +16,9 @@ import com.rose.yuscript.tree.YuCodeBlock;
  */
 public class YuContext {
 
-	private static Map<Integer,Map<String,Object>> sessionVariableMaps;
+	private static final Map<Integer,Map<String,Object>> sessionVariableMaps;
 	
-	private static Map<String,Object> globalVariables;
+	private static final Map<String,Object> globalVariables;
 	
 	static {
 		globalVariables = new ConcurrentHashMap<>();
@@ -34,28 +34,81 @@ public class YuContext {
 		return map;
 	}
 	
-	private Map<String,Object> sessionVariables;
-	private Map<String,Object> localVariables;
-	private Stack<YuCodeBlock> stack;
-	private Stack<Boolean> usage;
-	private int session;
+	private final Map<String,Object> sessionVariables;
+	private final Map<String,Object> localVariables;
+	private final Stack<YuCodeBlock> stack;
+	private final Stack<Boolean> usage;
+	private final int session;
 	private boolean stopFlag = false;
 	public final static YuCodeBlock NO_CODE_BLOCK = new YuCodeBlock();
 	private YuInterpreter declaringInterpreter;
-	
+	private final Stack<BoolWrapper> loopEnv = new Stack<>();
+
+	/**
+	 * Wrapper class
+	 */
+	private static class BoolWrapper {
+		public boolean value = false;
+	}
+
+	/**
+	 * Attach code block
+	 * @param block code block attach to current statement
+	 */
 	public void addCodeBlock(YuCodeBlock block) {
 		stack.push(block);
 		usage.push(false);
 	}
-	
+
+	/**
+	 * Enter a new loop
+	 */
+	public void enterLoop() {
+		loopEnv.add(new BoolWrapper());
+	}
+
+	/**
+	 * Exit from loop
+	 */
+	public void exitLoop() {
+		loopEnv.pop();
+	}
+
+	/**
+	 * Whether in a loop
+	 * @return whether in a loop
+	 */
+	public boolean isInLoop() {
+		return !loopEnv.empty();
+	}
+
+	/**
+	 * Break current loop
+	 */
+	public void loopBreak() {
+		loopEnv.peek().value = true;
+	}
+
+	/**
+	 * Whether the top code block is used
+	 * @return whether used
+	 */
 	public boolean isCodeBlockUsed() {
 		return usage.lastElement();
 	}
-	
+
+	/**
+	 * Whether there is code block
+	 * @return code block available
+	 */
 	public boolean hasCodeBlock() {
 		return (!stack.isEmpty()) && stack.lastElement() != NO_CODE_BLOCK;
 	}
-	
+
+	/**
+	 * Get code block attached to current statement
+	 * @return Code block near by current statement
+	 */
 	public YuCodeBlock getCodeBlock() {
 		YuCodeBlock block = hasCodeBlock() ? stack.lastElement() : null;
 		if(block != null) {
@@ -64,7 +117,10 @@ public class YuContext {
 		}
 		return block;
 	}
-	
+
+	/**
+	 * Exit from a code block
+	 */
 	public void popCodeBlock() {
 		stack.pop();
 		usage.pop();
@@ -73,7 +129,7 @@ public class YuContext {
 	/**
 	 * @param declaringInterpreter the declaringInterpreter to set
 	 */
-	public void setDeclaringInterpreter(YuInterpreter declaringInterpreter) {
+	protected void setDeclaringInterpreter(YuInterpreter declaringInterpreter) {
 		this.declaringInterpreter = declaringInterpreter;
 	}
 	
@@ -95,7 +151,7 @@ public class YuContext {
 	 * @return the stopFlag
 	 */
 	public boolean isStopFlagSet() {
-		return stopFlag;
+		return stopFlag || (!loopEnv.empty() && loopEnv.peek().value);
 	}
 	
 	/**

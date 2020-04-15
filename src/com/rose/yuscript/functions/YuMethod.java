@@ -237,6 +237,17 @@ public class YuMethod {
 	}
 
 	@ScriptMethod
+	public static Object[] nsz(Object size) {
+		return new Object[getInt(size)];
+	}
+
+	@ScriptMethod
+	public static Object nsz(Object size,Object type) {
+		//TODO wait for ClassManager to complete
+		return null;
+	}
+
+	@ScriptMethod
 	public static String ssg(Object str,Object p1,Object p2) {
 		return getString(str).substring(getInt(p1), getInt(p2));
 	}
@@ -266,6 +277,15 @@ public class YuMethod {
 			return c.replaceAll(a, b);
 		}else {
 			return sr(str, p1, p2);
+		}
+	}
+
+	@ScriptMethod
+	public static String ss(Object value) {
+		if(value instanceof String) {
+			return (String)value;
+		}else{
+			return String.valueOf(value);
 		}
 	}
 

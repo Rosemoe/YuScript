@@ -16,7 +16,19 @@ import java.lang.annotation.Target;
 
  */
 public @interface ScriptMethod {
-	
+
+	/**
+	 * the position of return value
+	 * @return begin of end
+	 */
 	boolean returnValueAtBegin() default false;
+
+	/**
+	 * Name in script env.
+	 * default is method's name
+	 * This can support special character used in iyu such as s+ and s-
+	 * @return name
+	 */
+	String scriptEnvName() default "@DEFAULT";
 	
 }

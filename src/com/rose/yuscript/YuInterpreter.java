@@ -29,24 +29,24 @@ import com.rose.yuscript.tree.YuWhileTree;
 
 /**
  * @author Rose
- *
+ * Base Interpreter for yu script
  */
 public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 
-	private int session;
+	private final int session;
 	
-	private FunctionManager mgr;
+	private final FunctionManager functionManager;
 	
 	public YuInterpreter(int session) {
 		this.session = session;
-		this.mgr = new FunctionManager();
+		this.functionManager = new FunctionManager();
 	}
 	
 	/**
 	 * @return the mgr
 	 */
 	public FunctionManager getFunctionManager() {
-		return mgr;
+		return functionManager;
 	}
 	
 	/**
@@ -55,12 +55,12 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 	public int getSession() {
 		return session;
 	}
-	
-	public void eval(String code) throws Throwable {
+
+	public void eval(String code) {
 		eval(new YuTree(new YuTokenizer(code)));
 	}
 	
-	public void eval(YuTree tree) throws Throwable {
+	public void eval(YuTree tree) {
 		eval(tree,new YuContext(getSession()));
 	}
 	
@@ -69,10 +69,11 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 			throw new IllegalArgumentException("argument(s) can not be null");
 		}
 		if(context.getDeclaringInterpreter() != null && context.getDeclaringInterpreter() != this) {
-			throw new IllegalArgumentException("bad context");
+			throw new IllegalArgumentException("bad context:context is using by another interpreter instance");
 		}
 		context.setDeclaringInterpreter(this);
 		tree.getRoot().accept(this, context);
+		context.setDeclaringInterpreter(null);
 	}
 
 	@Override
@@ -91,7 +92,7 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 	@Override
 	public Void visitCodeBlock(YuCodeBlock codeBlock, YuContext value) {
 		List<YuNode> nodes = codeBlock.getChildren();
-		for(int i = 0;i < nodes.size();i++) {
+		for(int i = 0;i < nodes.size() && !value.isStopFlagSet();i++) {
 			YuNode child = nodes.get(i);
 			YuCodeBlock block;
 			if(i + 1 < nodes.size()) {
@@ -111,9 +112,6 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 				i++;
 			}
 			value.popCodeBlock();
-			if(value.isStopFlagSet()) {
-				break;
-			}
 		}
 		return null;
 	}
@@ -147,14 +145,18 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 	public Void visitForTree(YuForTree tree, YuContext value) {
 		Object left = tree.getDest().getValue(value);
 		Object right = tree.getSrc().getValue(value);
+		value.enterLoop();
 		if(castToLong(left) != null && castToLong(right) != null) {
 			long max = castToLong(right);
-			for(long i = castToLong(left);i <= max;i++) {
+			for(long i = castToLong(left);i <= max && !value.isStopFlagSet();i++) {
 				tree.getCodeBlock().accept(this, value);
 			}
 		}else if(right != null && right.getClass().isArray()){
 			int length = Array.getLength(right);
 			for(int i = 0;i < length;i++) {
+				if(value.isStopFlagSet()) {
+					break;
+				}
 				if(tree.getDest().getType() == YuValue.TYPE_VAR) {
 					value.setVariable(tree.getDest().getVariableName(), Array.get(right, i));
 				}
@@ -163,6 +165,9 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 		}else if(right instanceof Iterable) {
 			Iterable<?> r = (Iterable<?>)right;
 			for (Object val : r) {
+				if(value.isStopFlagSet()) {
+					break;
+				}
 				if (tree.getDest().getType() == YuValue.TYPE_VAR) {
 					value.setVariable(tree.getDest().getVariableName(), val);
 				}
@@ -171,6 +176,7 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 		}else {
 			System.err.println("Incompatiable type for FOR loop");
 		}
+		value.exitLoop();
 		return null;
 	}
 
@@ -178,7 +184,7 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 	public Void visitFunctionCall(YuFunctionCall call, YuContext value)  {
 		List<Function> functions = getFunctionManager().getFunctions(call.getFunctionName());
 		if(functions.size() == 0) {
-			throw new YuSyntaxError("No such method found:" + call.getFunctionName());
+			throw new YuSyntaxError("No such method in function manager:" + call.getFunctionName());
 		}
 		int count = call.getArguments().size();
 		for(Function function : functions) {
@@ -186,7 +192,7 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 				try {
 					function.invoke(call.getArguments(), value, this);
 				}catch (Throwable e) {
-					throw new YuSyntaxError(e);
+					throw new YuSyntaxError("Exception in function call",e);
 				}
 			}
 		}
@@ -205,9 +211,11 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 
 	@Override
 	public Void visitWhileTree(YuWhileTree tree, YuContext value) {
+		value.enterLoop();
 		while(tree.getCondition().getValue(value) && !value.isStopFlagSet()) {
 			tree.getCodeBlock().accept(this, value);
 		}
+		value.exitLoop();
 		return null;
 	}
 
@@ -225,7 +233,11 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 
 	@Override
 	public Void visitBreak(YuBreak codeBlock, YuContext value) {
-		//This will be handled by for loop
+		if(value.isInLoop()) {
+			value.loopBreak();
+		}else{
+			throw new YuSyntaxError("trying to break loop outside a loop");
+		}
 		return null;
 	}
 
