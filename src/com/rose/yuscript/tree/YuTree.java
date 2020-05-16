@@ -34,26 +34,26 @@ public final class YuTree {
 		tokenizer.setCalculateLineColumn(true);
 		tokenizer.setSkipComment(true);
 		tokenizer.setSkipWhitespace(true);
-		root = (YuScope)parseCodeBlock(true);
+		root = (YuScope)parseCodeBlock(true, false);
 	}
 	
 	public YuScope getRoot() {
 		return root;
 	}
 	
-	private YuCodeBlock parseCodeBlock(boolean outside) throws YuSyntaxError {
+	private YuCodeBlock parseCodeBlock(boolean outside, boolean exitOnEnd) throws YuSyntaxError {
 		YuCodeBlock block = outside ? new YuScope() : new YuCodeBlock();
 		while(tokenizer.nextToken() != EOF) {
 			switch(tokenizer.getToken()) {
 			case LBRACE:{
-				block.addChild(parseCodeBlock(false));
+				block.addChild(parseCodeBlock(false, false));
 				break;
 			}
 			case RBRACE:{
 				if(!outside) {
 					return block;
 				}else {
-					throw new YuSyntaxError();
+					throw new YuSyntaxError("unexpected '}'");
 				}
 			}
 			case VARIABLE_PREFIX:{
@@ -89,6 +89,11 @@ public final class YuTree {
 				block.addChild(new YuBreak());
 				break;
 			}
+			case FUNCTION:{
+				tokenizer.pushBack(tokenizer.getTokenLength());
+				block.addFunction(parseFunction());
+				break;
+			}
 			case EOF:{
 				if(outside) {
 					return block;
@@ -96,75 +101,116 @@ public final class YuTree {
 					throw new YuSyntaxError();
 				}
 			}
+			case END:
+				if(exitOnEnd) {
+					tokenizer.pushBack(tokenizer.getTokenLength());
+					return block;
+				}
 			default:{
-				System.out.println(tokenizer.getToken());
 				throw new YuSyntaxError();
 			}
 			}
 		}
 		return block;
 	}
-	
+
+	private YuFunction parseFunction() throws YuSyntaxError {
+		if(tokenizer.nextToken() != FUNCTION) {
+			throw new YuSyntaxError("'fn' expected");
+		}
+		if(tokenizer.nextToken() != IDENTIFIER) {
+			throw new YuSyntaxError("Identifier expected");
+		}
+		YuFunction function = new YuFunction();
+		function.setName(tokenizer.getTokenString());
+		if(tokenizer.nextToken() != LPAREN) {
+			throw new YuSyntaxError("'(' expected");
+		}
+		YuTokens next = tokenizer.nextToken();
+		while(next == IDENTIFIER) {
+			function.addParameter(tokenizer.getTokenString());
+			next = tokenizer.nextToken();
+			if(next == COMMA) {
+				next = tokenizer.nextToken();
+				if(next != IDENTIFIER) {
+					throw new YuSyntaxError("Identifier expected");
+				}
+			} else if(next == RPAREN) {
+				break;
+			} else{
+				throw new YuSyntaxError("unexpected '" + tokenizer.getTokenString() + "' here");
+			}
+		}
+		function.setFunctionBody(parseCodeBlock(true, true));
+		if(tokenizer.nextToken() != END) {
+			throw new YuSyntaxError("'end' expected");
+		}
+		if(tokenizer.nextToken() != FUNCTION) {
+			throw new YuSyntaxError("'fn' expected");
+		}
+		return function;
+	}
+
 	private YuForTree parseForTree() throws YuSyntaxError {
 		YuForTree tree = new YuForTree();
 		if(tokenizer.nextToken() != FOR) {
-			throw new YuSyntaxError();
+			throw new YuSyntaxError("'for' expected");
 		}
 		if(tokenizer.nextToken() != LPAREN) {
-			throw new YuSyntaxError();
+			throw new YuSyntaxError("'(' expected");
 		}
 		tokenizer.nextToken();
 		tree.setDest(parseValue());
 		if(tokenizer.nextToken() != SEMI) {
-			throw new YuSyntaxError();
+			throw new YuSyntaxError("';' expected");
 		}
 		tokenizer.nextToken();
 		tree.setSrc(parseValue());
 		if(tokenizer.nextToken() != RPAREN) {
-			throw new YuSyntaxError();
+			throw new YuSyntaxError("')' expected");
 		}
 		if(tokenizer.nextToken() != LBRACE) {
-			throw new YuSyntaxError();
+			throw new YuSyntaxError("'{' expected");
 		}
-		tree.setCodeBlock(parseCodeBlock(false));
+		tree.setCodeBlock(parseCodeBlock(false, false));
 		return tree;
 	}
 	
 	private YuWhileTree parseWhileTree() throws YuSyntaxError {
 		YuWhileTree tree = new YuWhileTree();
 		if(tokenizer.nextToken() != WHILE) {
-			throw new YuSyntaxError();
+			throw new YuSyntaxError("'w' expected");
 		}
 		if(tokenizer.nextToken() != LPAREN) {
-			throw new YuSyntaxError();
+			throw new YuSyntaxError("'(' expected");
 		}
 		tree.setCondition(parseConditionalExpression());
 		if(tokenizer.nextToken() != RPAREN) {
-			throw new YuSyntaxError();
+			throw new YuSyntaxError("')' expected");
 		}
 		if(tokenizer.nextToken() != LBRACE) {
-			throw new YuSyntaxError();
+			throw new YuSyntaxError("'{' expected");
 		}
-		tree.setCodeBlock(parseCodeBlock(false));
+		tree.setCodeBlock(parseCodeBlock(false, false));
 		return tree;
 	}
 	
 	private YuIfTree parseIfTree() throws YuSyntaxError {
 		YuIfTree tree = new YuIfTree();
 		if(tokenizer.nextToken() != IF) {
-			throw new YuSyntaxError();
+			throw new YuSyntaxError("'f' expected");
 		}
 		if(tokenizer.nextToken() != LPAREN) {
-			throw new YuSyntaxError();
+			throw new YuSyntaxError("'(' expected");
 		}
 		tree.setCondition(parseConditionalExpression());
 		if(tokenizer.nextToken() != RPAREN) {
-			throw new YuSyntaxError();
+			throw new YuSyntaxError("')' expected");
 		}
 		if(tokenizer.nextToken() != LBRACE) {
-			throw new YuSyntaxError();
+			throw new YuSyntaxError("'{' expected");
 		}
-		tree.setCodeBlock(parseCodeBlock(false));
+		tree.setCodeBlock(parseCodeBlock(false, false));
 		YuTokens next = tokenizer.nextToken();
 		if(next != ELSE) {
 			tokenizer.pushBack(tokenizer.getTokenLength());
@@ -177,7 +223,7 @@ public final class YuTree {
 			block.addChild(parseIfTree());
 			tree.setFallbackCodeBlock(block);
 		}else if(next == LBRACE) {
-			tree.setFallbackCodeBlock(parseCodeBlock(false));
+			tree.setFallbackCodeBlock(parseCodeBlock(false, false));
 		}else {
 			throw new YuSyntaxError();
 		}
@@ -217,7 +263,7 @@ public final class YuTree {
 			condition.setOperator(token);
 			break;
 		default:
-			throw new YuSyntaxError();
+			throw new YuSyntaxError("unexpected '" + tokenizer.getTokenString() + "' here");
 		}
 		condition.setRight(parseExpression());
 		return condition;
@@ -226,16 +272,16 @@ public final class YuTree {
 	private YuAssignment parseAssignment() throws YuSyntaxError {
 		YuAssignment assignment = new YuAssignment();
 		if(tokenizer.nextToken() != VARIABLE_PREFIX) {
-			throw new YuSyntaxError();
+			throw new YuSyntaxError("'s','ss','sss' expected");
 		}
 		assignment.setVariableType(tokenizer.getTokenString());
 		if(tokenizer.nextToken() == IDENTIFIER) {
 			assignment.setVariableName(tokenizer.getTokenString());
 		}else {
-			throw new YuSyntaxError();
+			throw new YuSyntaxError("Identifier expected");
 		}
 		if(tokenizer.nextToken() != EQ) {
-			throw new YuSyntaxError();
+			throw new YuSyntaxError("'=' expected");
 		}
 		assignment.setValue(parseExpression());
 		return assignment;
@@ -244,11 +290,11 @@ public final class YuTree {
 	private YuFunctionCall parseFunctionCall() throws YuSyntaxError {
 		YuFunctionCall call = new YuFunctionCall();
 		if(tokenizer.nextToken() != IDENTIFIER) {
-			throw new YuSyntaxError();
+			throw new YuSyntaxError("Identifier expected");
 		}
 		call.setFunctionName(tokenizer.getTokenString());
 		if(tokenizer.nextToken() != LPAREN) {
-			throw new YuSyntaxError();
+			throw new YuSyntaxError("'(' expected");
 		}
 		if(tokenizer.nextToken() == RPAREN) {
 			return call;
@@ -261,7 +307,7 @@ public final class YuTree {
 			if(tokenizer.getToken() == RPAREN) {
 				break;
 			}else if(tokenizer.getToken() != COMMA){
-				throw new YuSyntaxError();
+				throw new YuSyntaxError("',' or ')' expected");
 			}
 		}
 		return call;
@@ -280,7 +326,7 @@ public final class YuTree {
 			expr.setInvert(invert);
 			expression.addChild(expr);
 			if(tokenizer.nextToken() != RPAREN) {
-				throw new YuSyntaxError();
+				throw new YuSyntaxError("')' expected");
 			}
 			break;
 		}
@@ -320,7 +366,7 @@ public final class YuTree {
 					invert = true;
 					token = tokenizer.nextToken();
 					if(!(token == PLUS || token == MINUS || token == MULTIPLY || token == DIVIDE)) {
-						throw new YuSyntaxError();
+						throw new YuSyntaxError("operator expected");
 					}
 				}
 				YuTokens op = tokenizer.getToken();
@@ -331,7 +377,7 @@ public final class YuTree {
 					expr.setInvert(invert);
 					expression.addExpression(op,expr);
 					if(tokenizer.getToken() != RPAREN) {
-						throw new YuSyntaxError();
+						throw new YuSyntaxError("')' expected");
 					}
 					break;
 				}
@@ -352,7 +398,7 @@ public final class YuTree {
 				{
 					token = tokenizer.nextToken();
 					if(token != NUMBER) {
-						throw new YuSyntaxError();
+						throw new YuSyntaxError("number literal expected");
 					}
 					YuValue val = new YuValue();
 					val.setInvert(invert);
@@ -361,7 +407,7 @@ public final class YuTree {
 					break;
 				}
 				default:
-					throw new YuSyntaxError();
+					throw new YuSyntaxError("unexpected '" + tokenizer.getTokenString() + "' here");
 				}
 				token = tokenizer.nextToken();
 			}else{
@@ -383,11 +429,11 @@ public final class YuTree {
 			break;
 		case VARIABLE_PREFIX:
 			String prefix = tokenizer.getTokenString();
-			if(tokenizer.nextToken()!=DOT) {
-				throw new YuSyntaxError();
+			if(tokenizer.nextToken() != DOT) {
+				throw new YuSyntaxError("'.' expected");
 			}
-			if(tokenizer.nextToken()!=IDENTIFIER) {
-				throw new YuSyntaxError();
+			if(tokenizer.nextToken() != IDENTIFIER) {
+				throw new YuSyntaxError("Identifier expected");
 			}
 			value.setVariableName(prefix + "." + tokenizer.getTokenString());
 			break;

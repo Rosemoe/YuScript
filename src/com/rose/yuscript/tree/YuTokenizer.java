@@ -162,6 +162,7 @@ public class YuTokenizer {
         index = index + length;
         offset = offset + length;
         if (offset == bufferLen) {
+            length = 0;
             return EOF;
         }
         char ch = source.charAt(offset);
@@ -445,6 +446,8 @@ public class YuTokenizer {
         keywords.put("null", NULL);
         keywords.put("true", TRUE);
         keywords.put("false",FALSE);
+        keywords.put("end",END);
+        keywords.put("fn",FUNCTION);
         MyCharacter.initMap();
     }
 

@@ -21,6 +21,7 @@ import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.rose.yuscript.tree.YuCodeBlock;
+import com.rose.yuscript.tree.YuFunction;
 
 /**
  * The context used to save and manage variables
@@ -55,6 +56,26 @@ public class YuContext {
 	public final static YuCodeBlock NO_CODE_BLOCK = new YuCodeBlock();
 	private YuInterpreter declaringInterpreter;
 	private final Stack<BoolWrapper> loopEnv = new Stack<>();
+	private final Stack<YuCodeBlock> executeStack = new Stack<>();
+
+	public void enterCodeBlock(YuCodeBlock codeBlock) {
+		executeStack.add(codeBlock);
+	}
+
+	public void exitCodeBlock() {
+		executeStack.pop();
+	}
+
+	public YuFunction findFunctionFromScope(String name, int paramCount) {
+		for(YuCodeBlock codeBlock : executeStack) {
+			for(YuFunction function : codeBlock.getFunctions()) {
+				if(function.getName().equals(name) && function.getArgumentCount() == paramCount) {
+					return function;
+				}
+			}
+		}
+		return null;
+	}
 
 	/**
 	 * Wrapper class
@@ -182,10 +203,18 @@ public class YuContext {
 	 * Create a new context from the given context
 	 * @param context The source context.Can not be null
 	 */
-	@SuppressWarnings("CopyConstructorMissesField")
+
 	public YuContext(YuContext context) {
+		this(context, true);
+	}
+
+	@SuppressWarnings("CopyConstructorMissesField")
+	public YuContext(YuContext context, boolean copyLocalVariables) {
 		this(context.getSession());
-		localVariables.putAll(context.localVariables);
+		if(copyLocalVariables) {
+			localVariables.putAll(context.localVariables);
+		}
+		executeStack.addAll(context.executeStack);
 		declaringInterpreter = context.declaringInterpreter;
 	}
 	

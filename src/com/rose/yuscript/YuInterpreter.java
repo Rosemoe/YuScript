@@ -20,24 +20,7 @@ import java.util.List;
 
 import com.rose.yuscript.functions.Function;
 import com.rose.yuscript.functions.FunctionManager;
-import com.rose.yuscript.tree.YuAssignment;
-import com.rose.yuscript.tree.YuBreak;
-import com.rose.yuscript.tree.YuCodeBlock;
-import com.rose.yuscript.tree.YuCondition;
-import com.rose.yuscript.tree.YuConditionalExpression;
-import com.rose.yuscript.tree.YuEndcode;
-import com.rose.yuscript.tree.YuExpression;
-import com.rose.yuscript.tree.YuForTree;
-import com.rose.yuscript.tree.YuFunctionCall;
-import com.rose.yuscript.tree.YuIfTree;
-import com.rose.yuscript.tree.YuNode;
-import com.rose.yuscript.tree.YuScope;
-import com.rose.yuscript.tree.YuSyntaxError;
-import com.rose.yuscript.tree.YuTokenizer;
-import com.rose.yuscript.tree.YuTree;
-import com.rose.yuscript.tree.YuTreeVisitor;
-import com.rose.yuscript.tree.YuValue;
-import com.rose.yuscript.tree.YuWhileTree;
+import com.rose.yuscript.tree.*;
 
 /**
  * @author Rose
@@ -103,6 +86,7 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 
 	@Override
 	public Void visitCodeBlock(YuCodeBlock codeBlock, YuContext value) {
+		value.enterCodeBlock(codeBlock);
 		List<YuNode> nodes = codeBlock.getChildren();
 		for(int i = 0;i < nodes.size() && !value.isStopFlagSet();i++) {
 			YuNode child = nodes.get(i);
@@ -125,6 +109,7 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 			}
 			value.popCodeBlock();
 		}
+		value.exitCodeBlock();
 		return null;
 	}
 
@@ -194,6 +179,15 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 
 	@Override
 	public Void visitFunctionCall(YuFunctionCall call, YuContext value)  {
+		Function customFunc = value.findFunctionFromScope(call.getFunctionName(), call.getArguments().size());
+		if(customFunc != null) {
+			try {
+				customFunc.invoke(call.getArguments(), value, this);
+			}catch (Throwable e) {
+				throw new Error("Exception occurred in function(custom) call",e);
+			}
+			return null;
+		}
 		List<Function> functions = getFunctionManager().getFunctions(call.getFunctionName());
 		if(functions.size() == 0) {
 			throw new YuSyntaxError("No such method in function manager:" + call.getFunctionName());
@@ -204,7 +198,7 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 				try {
 					function.invoke(call.getArguments(), value, this);
 				}catch (Throwable e) {
-					throw new YuSyntaxError("Exception in function call",e);
+					throw new Error("Exception occurred in function call",e);
 				}
 			}
 		}
@@ -265,4 +259,9 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 		return null;
 	}
 
+	@Override
+	public Void visitFunction(YuFunction function, YuContext value) {
+		System.out.println(function);
+		return null;
+	}
 }

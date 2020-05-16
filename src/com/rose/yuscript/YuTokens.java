@@ -67,5 +67,7 @@ public enum YuTokens {
 	ELSE,
 	WHILE,
 	FOR,
-	TRUE,FALSE,NULL
+	TRUE,FALSE,NULL,
+
+	FUNCTION,END
 }

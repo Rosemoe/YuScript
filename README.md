@@ -1,12 +1,15 @@
-## YuScript
-一个针对iyu v3（裕语言v3）的脚本运行器。   
+## YuScript   
+A script engine for iyu v3.   
+一个针对iyu v3（裕语言v3）的脚本运行器。
+Only core code supported by this project (Actually only grammar). There is some sample methods used to test.      
 本项目只包含其核心功能，即语法支持。其中只有一些样例方法。   
+If you want to have more methods, do it by yourself.   
 如果需要更多功能请自行添加。   
 ## 与官方语言的不同   
 * 代码书写自由,不需要把一个语句写在同一行  
 * 允许在传递函数参数时使用一个表达式而不是单个变量或常量   
 * 舍弃了ss()函数,直接书写加法表达式来完成字符串拼接(但是你仍然可以使用它来把特定的变量转换为字符串)  
-* 在任意代码块中自定义函数并且使用(**TODO**)    
+* 在任意代码块中自定义函数并且使用    
 * 在f()和w()中的语句必须是条件表达式而不是一个变量或用条件连接符连接的变量(**将在未来版本中改进**)   
 ## 自定义函数   
 默认只添加`YuMethod`下的方法，为了使功能更加丰富，我们允许你自定义方法。   

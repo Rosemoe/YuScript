@@ -27,7 +27,7 @@ public class Main {
 			"f(a > 3){\n" +
 			"break\n" +
 			"}\n" +
-			"syso(\"来自\" + a)" +
+			"syso(\"a = \" + a)" +
 			"}\n" +
 			"cls(\"int[]\",class)\n" +
 			"syso(class)\n" +
@@ -41,7 +41,12 @@ public class Main {
 			"javass(b,\"AbstractStringBuilder\",\"value\",arr)\n" +
 			"syso(b)\n" +
 			"javags(v,b,\"AbstractStringBuilder\",\"value\")\n" +
-			"syso(v)";
+			"syso(v)\n" +
+			"foo(\"Test\")\n" +
+			"" +
+			"fn foo(param)\n" +
+			"syso(param)" +
+			"end fn\n";
 
 	public static void main(String[] args){
 		YuInterpreter i = new YuInterpreter(0);
