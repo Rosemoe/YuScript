@@ -15,9 +15,7 @@
  */
 package com.rose.yuscript.tree;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author Rose
@@ -25,9 +23,11 @@ import java.util.Objects;
  */
 public class YuCodeBlock implements YuNode {
 
-	private List<YuNode> children;
+	private final List<YuNode> children;
 
-	private List<YuFunction> functions;
+	private final List<YuFunction> functions;
+
+	private final Map<String, YuFunction> functionMap = new HashMap<>();
 	
 	@Override
 	public <T, R> R accept(YuTreeVisitor<R, T> visitor, T value) {
@@ -53,5 +53,11 @@ public class YuCodeBlock implements YuNode {
 
 	public void addFunction(YuFunction function) {
 		functions.add(function);
+		functionMap.put(function.getName() + "@" + function.getParameterCount(), function);
 	}
+
+	public YuFunction getFunction(String id) {
+		return functionMap.get(id);
+	}
+
 }
