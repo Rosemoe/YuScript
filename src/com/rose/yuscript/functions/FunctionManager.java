@@ -33,11 +33,14 @@ public class FunctionManager {
 
 	private final Map<String,List<Function>> functionMap;
 
+	private final Map<String, YuModule> modules;
+
 	/**
 	 * Create a FunctionManager and add all basic functions
 	 */
 	public FunctionManager() {
 		functionMap = new HashMap<>();
+		modules = new HashMap<>();
 		addFunctionsFromClass(YuMethod.class);
 	}
 
@@ -105,7 +108,11 @@ public class FunctionManager {
 	 * @param function New function
 	 */
 	public void addFunction(Function function) {
-		List<Function> list = functionMap.computeIfAbsent(function.getName(), k -> new ArrayList<>());
+		List<Function> list = functionMap.get(function.getName());
+		if(list == null) {
+			list = new ArrayList<>();
+			functionMap.put(function.getName(), list);
+		}
 		if(list.contains(function)) {
 			throw new IllegalArgumentException("Function has been added");
 		}
@@ -115,11 +122,18 @@ public class FunctionManager {
 	/**
 	 * Get functions with the given name
 	 * @param name function name
-	 * @return An unmodifiable list of functions with the given name
+	 * @return list of functions with the given name
 	 */
 	public List<Function> getFunctions(String name) {
-		List<Function> functions = functionMap.get(name);
-		return Collections.unmodifiableList(functions != null ? functions : Collections.emptyList());
+		return functionMap.get(name);
+	}
+
+	public void putModule(YuModule module) {
+		modules.put(module.getName(), module);
+	}
+
+	public YuModule getModule(String name) {
+		return modules.get(name);
 	}
 
 }
