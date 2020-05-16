@@ -11,7 +11,7 @@ public class YuFunction implements YuNode, Function {
 
     private String name;
 
-    private List<String> parameterNames = new ArrayList<>();
+    private final List<String> parameterNames = new ArrayList<>();
 
     private YuCodeBlock functionBody;
 

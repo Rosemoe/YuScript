@@ -46,4 +46,6 @@ public interface YuTreeVisitor <R,T> {
 	R visitWhileTree(YuWhileTree tree,T value);
 
 	R visitFunction(YuFunction function, T value);
+
+	R visitModuleFunctionCall(YuModuleFunctionCall functionCall, T value);
 }

@@ -67,11 +67,12 @@ public class YuContext {
 	}
 
 	public YuFunction findFunctionFromScope(String name, int paramCount) {
-		for(YuCodeBlock codeBlock : executeStack) {
-			for(YuFunction function : codeBlock.getFunctions()) {
-				if(function.getName().equals(name) && function.getArgumentCount() == paramCount) {
-					return function;
-				}
+		String functionId = name + "@" + paramCount;
+		for(int i = executeStack.size() - 1;i >= 0;i--) {
+			YuCodeBlock codeBlock = executeStack.get(i);
+			YuFunction function;
+			if((function = codeBlock.getFunction(functionId)) != null) {
+				return function;
 			}
 		}
 		return null;

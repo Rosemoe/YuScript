@@ -15,6 +15,10 @@
  */
 package com.rose.yuscript;
 
+import com.rose.yuscript.functions.YuModule;
+import com.rose.yuscript.tree.YuTokenizer;
+import com.rose.yuscript.tree.YuTree;
+
 /**
  * @author Rose
  */
@@ -42,14 +46,31 @@ public class Main {
 			"syso(b)\n" +
 			"javags(v,b,\"AbstractStringBuilder\",\"value\")\n" +
 			"syso(v)\n" +
-			"foo(\"Test\")\n" +
+			"print(\"Test\")\n" +
+			"fn test.call()\n" +
+			"test.call()" +
 			"" +
-			"fn foo(param)\n" +
-			"syso(param)" +
+			"fn print(param)\n" +
+
+			"test()" +
+			"syso(\"My output is:\" + param)\n" +
+
+			"fn test()\n" +
+			"syso(\"Inner function\")" +
+			"end fn\n" +
+
+			"end fn\n";
+
+	private final static String SAMPLE_MODULE = "" +
+			"fn call()\n" +
+			"syso(\"call() method is called\")" +
 			"end fn\n";
 
 	public static void main(String[] args){
 		YuInterpreter i = new YuInterpreter(0);
+		YuModule module = new YuModule("test");
+		module.addTree(new YuTree(new YuTokenizer(SAMPLE_MODULE)));
+		i.getFunctionManager().putModule(module);
 		i.eval(SAMPLE_CODE);
 	}
 

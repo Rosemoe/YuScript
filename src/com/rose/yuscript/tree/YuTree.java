@@ -34,7 +34,11 @@ public final class YuTree {
 		tokenizer.setCalculateLineColumn(true);
 		tokenizer.setSkipComment(true);
 		tokenizer.setSkipWhitespace(true);
-		root = (YuScope)parseCodeBlock(true, false);
+		try {
+			root = (YuScope) parseCodeBlock(true, false);
+		} catch (Exception e) {
+			throw new YuSyntaxError("line: " + tokenizer.getLine() + " column: " + tokenizer.getColumn(), e);
+		}
 	}
 	
 	public YuScope getRoot() {
@@ -91,7 +95,12 @@ public final class YuTree {
 			}
 			case FUNCTION:{
 				tokenizer.pushBack(tokenizer.getTokenLength());
-				block.addFunction(parseFunction());
+				YuNode node = parseFunction();
+				if(node instanceof YuFunction) {
+					block.addFunction((YuFunction)node);
+				} else {
+					block.addChild(node);
+				}
 				break;
 			}
 			case EOF:{
@@ -107,25 +116,41 @@ public final class YuTree {
 					return block;
 				}
 			default:{
-				throw new YuSyntaxError();
+				throw new YuSyntaxError("unexpected '" + tokenizer.getTokenString() + "' here");
 			}
 			}
 		}
 		return block;
 	}
 
-	private YuFunction parseFunction() throws YuSyntaxError {
+	private YuNode parseFunction() throws YuSyntaxError {
 		if(tokenizer.nextToken() != FUNCTION) {
 			throw new YuSyntaxError("'fn' expected");
 		}
 		if(tokenizer.nextToken() != IDENTIFIER) {
 			throw new YuSyntaxError("Identifier expected");
 		}
-		YuFunction function = new YuFunction();
-		function.setName(tokenizer.getTokenString());
-		if(tokenizer.nextToken() != LPAREN) {
-			throw new YuSyntaxError("'(' expected");
+		String moduleOrFunction = tokenizer.getTokenString();
+		YuTokens next = tokenizer.nextToken();
+		if(next == LPAREN) {
+			YuFunction function = new YuFunction();
+			function.setName(moduleOrFunction);
+			return parseFunctionExactly(function);
+		} else if(next == DOT) {
+			YuFunctionCall call = parseFunctionCall();
+			YuModuleFunctionCall moduleFunctionCall = new YuModuleFunctionCall();
+			moduleFunctionCall.setModuleName(moduleOrFunction);
+			moduleFunctionCall.setFunctionName(call.getFunctionName());
+			for(YuExpression expression : call.getArguments()) {
+				moduleFunctionCall.addArgument(expression);
+			}
+			return moduleFunctionCall;
+		} else {
+			throw new YuSyntaxError("'(' or '.' expected here");
 		}
+	}
+
+	private YuFunction parseFunctionExactly(YuFunction function) throws YuSyntaxError {
 		YuTokens next = tokenizer.nextToken();
 		while(next == IDENTIFIER) {
 			function.addParameter(tokenizer.getTokenString());
@@ -145,8 +170,10 @@ public final class YuTree {
 		if(tokenizer.nextToken() != END) {
 			throw new YuSyntaxError("'end' expected");
 		}
-		if(tokenizer.nextToken() != FUNCTION) {
-			throw new YuSyntaxError("'fn' expected");
+		YuTokens token;
+		if((token = tokenizer.nextToken()) != FUNCTION) {
+			if(token != EOF)
+				tokenizer.pushBack(tokenizer.getTokenLength());
 		}
 		return function;
 	}
@@ -293,7 +320,19 @@ public final class YuTree {
 			throw new YuSyntaxError("Identifier expected");
 		}
 		call.setFunctionName(tokenizer.getTokenString());
-		if(tokenizer.nextToken() != LPAREN) {
+		YuTokens next = tokenizer.nextToken();
+		if(next == DOT) {
+			YuModuleFunctionCall newCall = new YuModuleFunctionCall();
+			newCall.setModuleName(call.getFunctionName());
+			call = newCall;
+			next = tokenizer.nextToken();
+			if(next != IDENTIFIER) {
+				throw new YuSyntaxError("Identifier expected");
+			}
+			call.setFunctionName(tokenizer.getTokenString());
+			next = tokenizer.nextToken();
+		}
+		if(next != LPAREN) {
 			throw new YuSyntaxError("'(' expected");
 		}
 		if(tokenizer.nextToken() == RPAREN) {

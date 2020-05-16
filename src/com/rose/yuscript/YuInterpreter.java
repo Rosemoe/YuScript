@@ -17,9 +17,11 @@ package com.rose.yuscript;
 
 import java.lang.reflect.Array;
 import java.util.List;
+import java.util.Objects;
 
 import com.rose.yuscript.functions.Function;
 import com.rose.yuscript.functions.FunctionManager;
+import com.rose.yuscript.functions.YuModule;
 import com.rose.yuscript.tree.*;
 
 /**
@@ -30,13 +32,26 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 
 	private final int session;
 	
-	private final FunctionManager functionManager;
-	
+	private FunctionManager functionManager;
+
 	public YuInterpreter(int session) {
-		this.session = session;
-		this.functionManager = new FunctionManager();
+		this(session, new FunctionManager());
 	}
-	
+
+	public YuInterpreter(int session, FunctionManager functionManager) {
+		this.session = session;
+		setFunctionManager(functionManager);
+	}
+
+	/**
+	 * Set the function manager
+	 * This method should be called when no evaluation is in progress
+	 * @param functionManager New function manager
+	 */
+	public void setFunctionManager(FunctionManager functionManager) {
+		this.functionManager = Objects.requireNonNull(functionManager);
+	}
+
 	/**
 	 * @return the mgr
 	 */
@@ -171,7 +186,7 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 				tree.getCodeBlock().accept(this, value);
 			}
 		}else {
-			System.err.println("Incompatiable type for FOR loop");
+			System.err.println("Incompatible type for FOR loop");
 		}
 		value.exitLoop();
 		return null;
@@ -193,6 +208,7 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 			throw new YuSyntaxError("No such method in function manager:" + call.getFunctionName());
 		}
 		int count = call.getArguments().size();
+		boolean matched = false;
 		for(Function function : functions) {
 			if(function.getArgumentCount() == count || function.getArgumentCount() == -1) {
 				try {
@@ -200,7 +216,12 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 				}catch (Throwable e) {
 					throw new Error("Exception occurred in function call",e);
 				}
+				matched = true;
+				break;
 			}
+		}
+		if(!matched) {
+			throw new YuSyntaxError("No such method in function manager:" + call.getFunctionName());
 		}
 		return null;
 	}
@@ -261,7 +282,35 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 
 	@Override
 	public Void visitFunction(YuFunction function, YuContext value) {
-		System.out.println(function);
+		return null;
+	}
+
+	@Override
+	public Void visitModuleFunctionCall(YuModuleFunctionCall call, YuContext value) {
+		YuModule module = getFunctionManager().getModule(call.getModuleName());
+		if(module == null) {
+			throw new YuSyntaxError("module '" + call.getModuleName() + "' not found");
+		}
+		List<Function> functions = module.getFunctions(call.getFunctionName());
+		if(functions.size() == 0) {
+			throw new YuSyntaxError("No such method in module:" + call.getFunctionName());
+		}
+		int count = call.getArguments().size();
+		boolean matched = false;
+		for(Function function : functions) {
+			if(function.getArgumentCount() == count || function.getArgumentCount() == -1) {
+				try {
+					function.invoke(call.getArguments(), value, this);
+				}catch (Throwable e) {
+					throw new Error("Exception occurred in function call",e);
+				}
+				matched = true;
+				break;
+			}
+		}
+		if(!matched) {
+			throw new YuSyntaxError("No such method in module:" + call.getFunctionName());
+		}
 		return null;
 	}
 }
