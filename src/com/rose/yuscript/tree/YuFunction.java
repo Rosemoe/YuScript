@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Rose2073
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package com.rose.yuscript.tree;
 
 import com.rose.yuscript.YuContext;
@@ -28,22 +43,21 @@ public class YuFunction implements YuNode, Function {
 
     @Override
     public void invoke(List<YuExpression> arguments, YuContext context, YuInterpreter interpreter) throws Throwable {
-        YuContext newContext = new YuContext(context, false);
+        YuContext newContext = new YuContext(context, false, false);
         for(int i = 0;i < getParameterCount();i++) {
             String name = getParameterNames().get(i);
             Object value = arguments.get(i).getValue(context);
             newContext.setVariable(name, value);
         }
         interpreter.visitCodeBlock(getFunctionBody(), newContext);
-        for(Integer position : getReturnPositions()) {
-            if(position != null && position >= 0) {
-                YuExpression paramExpr = arguments.get(position);
-                if(paramExpr.getOperators().size() == 0) {
-                    YuValue valueObj = paramExpr.getChildren().get(0);
-                    if(valueObj.getType() == YuValue.TYPE_VAR) {
-                        Object value = newContext.getVariable(getParameterNames().get(position));
-                        context.setVariable(valueObj.getVariableName(), value);
-                    }
+        for(int i = 0;i < getReturnPositions().size();i++) {
+            Integer position = getReturnPositions().get(i);
+            YuExpression paramExpr = arguments.get(position);
+            if(paramExpr.getOperators().size() == 0) {
+                YuValue valueObj = paramExpr.getChildren().get(0);
+                if(valueObj.getType() == YuValue.TYPE_VAR) {
+                    Object value = newContext.getVariable(getParameterNames().get(position));
+                    context.setVariable(valueObj.getVariableName(), value);
                 }
             }
         }

@@ -78,6 +78,15 @@ public class YuCondition implements YuNode {
 		return right;
 	}
 
+	public static double getDouble(Object value) {
+		if(value instanceof Number) {
+			return ((Number)value).doubleValue();
+		} else {
+			String str = stringForm(value);
+			return str.contains(".") ? Double.parseDouble(str) : Long.parseLong(str);
+		}
+	}
+
 	@SuppressWarnings("incomplete-switch")
 	public boolean getValue(YuContext context) {
 		if (operator != null) {
@@ -88,17 +97,13 @@ public class YuCondition implements YuNode {
 				case NOTEQ:
 					return !stringForm(left.getValue(context)).equals(stringForm(right.getValue(context)));
 				case LT:
-					return Long.parseLong(stringForm(left.getValue(context))) < Long
-							.parseLong(stringForm(right.getValue(context)));
+					return getDouble(left.getValue(context)) < getDouble(right.getValue(context));
 				case GT:
-					return Long.parseLong(stringForm(left.getValue(context))) > Long
-							.parseLong(stringForm(right.getValue(context)));
+					return getDouble(left.getValue(context)) > getDouble(right.getValue(context));
 				case LTEQ:
-					return Long.parseLong(stringForm(left.getValue(context))) <= Long
-							.parseLong(stringForm(right.getValue(context)));
+					return getDouble(left.getValue(context)) <= getDouble(right.getValue(context));
 				case GTEQ:
-					return Long.parseLong(stringForm(left.getValue(context))) >= Long
-							.parseLong(stringForm(right.getValue(context)));
+					return getDouble(left.getValue(context)) >= getDouble(right.getValue(context));
 				case STARTS_WITH:
 					return stringForm(left.getValue(context)).startsWith(stringForm(right.getValue(context)));
 				case CONTAINS:

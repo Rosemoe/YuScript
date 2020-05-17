@@ -24,47 +24,11 @@ import com.rose.yuscript.tree.YuTree;
  */
 public class Main {
 
-	private final static String SAMPLE_CODE = "s a = 0\n" +
-			"syso(a,a,a)\n" +
-			"for(1;5){\n" +
-			"s(a+1,a)\n" +
-			"f(a > 3){\n" +
-			"break\n" +
-			"}\n" +
-			"syso(\"a = \" + a)" +
-			"}\n" +
-			"cls(\"int[]\",class)\n" +
-			"syso(class)\n" +
-			"javanew(b,\"java.lang.StringBuilder\")\n" +
-			"syso(b)\n" +
-			"java(b,b,\"StringBuilder.append\",\"String\",233)\n" +
-			"syso(b)\n" +
-			"javax(null,b,\"StringBuilder\",\"setLength\",\"int\",1)\n" +
-			"syso(b)\n" +
-			"nsz(50,\"byte\",arr)" +
-			"javass(b,\"AbstractStringBuilder\",\"value\",arr)\n" +
-			"syso(b)\n" +
-			"javags(v,b,\"AbstractStringBuilder\",\"value\")\n" +
-			"syso(v)\n" +
-			"print(\"Test\")\n" +
-
-			"math.fibonacci(20,result)\n" +
+	private final static String SAMPLE_CODE = "math.fibonacci(20,result)\n" +
             "syso(result)\n" +
-
-			"getStringTrimmed(\"  origin   \", newStr)\n" +
-            "syso(newStr)\n" +
-
-            "fn getStringTrimmed(string,*dest)\n" +
-            "strim(string,dest)\n" +
-            "end fn\n" +
-
-			"fn print(param)\n" +
-			"test()" +
-			"syso(\"My output is:\" + param)\n" +
-			"fn test()\n" +
-			"syso(\"Inner function\")" +
-			"end fn\n" +
-			"end fn\n";
+			"s(0-5,a)" +
+			"math.abs(a,a)" +
+			"syso(a)" ;
 
 	private final static String SAMPLE_MODULE = "" +
 			"fn fibonacci(i,*r)\n" +
@@ -77,21 +41,23 @@ public class Main {
             "s(i-1,i)\n" +
             "math.fibonacci(i,k)\n" +
             "s(j+k,r)" +
+			"end fn\n" +
+			"" +
+			"fn abs(val,*dest)\n" +
+			"f(val < 0)\n { \n" +
+			"s(0 - val,dest)" +
+			"}\nelse\n{" +
+			"s dest = val\n" +
+			"}\n" +
 			"end fn\n";
 
-	public static int fib(int a) {
-	    if(a <= 2)
-	        return 1;
-	    return fib(a-1) + fib(a-2);
-    }
-
 	public static void main(String[] args){
-        System.out.println(fib(20));
 		YuInterpreter i = new YuInterpreter(0);
 		YuModule module = new YuModule("math");
 		module.addTree(new YuTree(new YuTokenizer(SAMPLE_MODULE)));
 		i.getFunctionManager().putModule(module);
-		i.eval(SAMPLE_CODE);
+        YuTree tree = new YuTree(new YuTokenizer(SAMPLE_CODE));
+        i.eval(tree);
 	}
 
 }

@@ -15,6 +15,8 @@
  */
 package com.rose.yuscript.tree;
 
+import com.rose.yuscript.functions.FunctionManager;
+
 import java.util.*;
 
 /**
@@ -53,7 +55,7 @@ public class YuCodeBlock implements YuNode {
 
 	public void addFunction(YuFunction function) {
 		functions.add(function);
-		functionMap.put(function.getName() + "@" + function.getParameterCount(), function);
+		functionMap.put(FunctionManager.getFunctionID(function), function);
 	}
 
 	public YuFunction getFunction(String id) {

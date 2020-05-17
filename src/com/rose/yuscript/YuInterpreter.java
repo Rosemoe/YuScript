@@ -194,36 +194,34 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 
 	@Override
 	public Void visitFunctionCall(YuFunctionCall call, YuContext value)  {
-		Function customFunc = value.findFunctionFromScope(call.getFunctionName(), call.getArguments().size());
-		if(customFunc != null) {
+		Function function = value.findFunctionFromScope(call.getFunctionName(), call.getArguments().size());
+		if(function != null) {
 			try {
-				customFunc.invoke(call.getArguments(), value, this);
+				function.invoke(call.getArguments(), value, this);
 			}catch (Throwable e) {
 				throw new Error("Exception occurred in function(custom) call",e);
 			}
 			return null;
 		}
-		List<Function> functions = getFunctionManager().getFunctions(call.getFunctionName());
-		if(functions.size() == 0) {
-			throw new YuSyntaxError("No such method in function manager:" + call.getFunctionName());
-		}
-		int count = call.getArguments().size();
-		boolean matched = false;
-		for(Function function : functions) {
-			if(function.getArgumentCount() == count || function.getArgumentCount() == -1) {
-				try {
-					function.invoke(call.getArguments(), value, this);
-				}catch (Throwable e) {
-					throw new Error("Exception occurred in function call",e);
-				}
-				matched = true;
-				break;
+		function = functionManager.getFunction(FunctionManager.getFunctionID(call.getFunctionName(), call.getArguments().size()));
+		if(function != null) {
+			try {
+				function.invoke(call.getArguments(), value, this);
+			}catch (Throwable e) {
+				throw new Error("Exception occurred in function(custom) call",e);
 			}
+			return null;
 		}
-		if(!matched) {
-			throw new YuSyntaxError("No such method in function manager:" + call.getFunctionName());
+		function = functionManager.getFunction(FunctionManager.getFunctionID(call.getFunctionName(), -1));
+		if(function != null) {
+			try {
+				function.invoke(call.getArguments(), value, this);
+			}catch (Throwable e) {
+				throw new Error("Exception occurred in function(custom) call",e);
+			}
+			return null;
 		}
-		return null;
+		throw new YuSyntaxError("no such method:" + call.getFunctionName() + " with argument count " + call.getArguments().size());
 	}
 
 	@Override
@@ -291,25 +289,23 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 		if(module == null) {
 			throw new YuSyntaxError("module '" + call.getModuleName() + "' not found");
 		}
-		List<Function> functions = module.getFunctions(call.getFunctionName());
-		if(functions.size() == 0) {
-			throw new YuSyntaxError("No such method in module:" + call.getFunctionName());
-		}
-		int count = call.getArguments().size();
-		boolean matched = false;
-		for(Function function : functions) {
-			if(function.getArgumentCount() == count || function.getArgumentCount() == -1) {
-				try {
-					function.invoke(call.getArguments(), value, this);
-				}catch (Throwable e) {
-					throw new Error("Exception occurred in function call",e);
-				}
-				matched = true;
-				break;
+		Function function = module.getFunction(call.getFunctionName(), call.getArguments().size());
+		if(function != null) {
+			try {
+				function.invoke(call.getArguments(), value, this);
+			}catch (Throwable e) {
+				throw new Error("Exception occurred in function(custom) call",e);
 			}
+			return null;
 		}
-		if(!matched) {
-			throw new YuSyntaxError("No such method in module:" + call.getFunctionName());
+		function = module.getFunction(call.getFunctionName(), -1);
+		if(function != null) {
+			try {
+				function.invoke(call.getArguments(), value, this);
+			}catch (Throwable e) {
+				throw new Error("Exception occurred in function(custom) call",e);
+			}
+			return null;
 		}
 		return null;
 	}

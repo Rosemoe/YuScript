@@ -56,6 +56,7 @@ public class JavaFunction implements Function {
 		firstRtv = method.getAnnotation(ScriptMethod.class).returnValueAtBegin();
 		String specialName = method.getAnnotation(ScriptMethod.class).scriptEnvName();
 		this.name = specialName.equals("@DEFAULT") ? method.getName() : specialName;
+		method.setAccessible(true);
 	}
 
 	public JavaFunction(Method method,String name) {

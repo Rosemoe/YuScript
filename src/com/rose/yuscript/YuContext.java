@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.rose.yuscript.functions.FunctionManager;
 import com.rose.yuscript.tree.YuCodeBlock;
 import com.rose.yuscript.tree.YuFunction;
 
@@ -67,7 +68,7 @@ public class YuContext {
 	}
 
 	public YuFunction findFunctionFromScope(String name, int paramCount) {
-		String functionId = name + "@" + paramCount;
+		String functionId = FunctionManager.getFunctionID(name, paramCount);
 		for(int i = executeStack.size() - 1;i >= 0;i--) {
 			YuCodeBlock codeBlock = executeStack.get(i);
 			YuFunction function;
@@ -206,16 +207,18 @@ public class YuContext {
 	 */
 
 	public YuContext(YuContext context) {
-		this(context, true);
+		this(context, true, true);
 	}
 
 	@SuppressWarnings("CopyConstructorMissesField")
-	public YuContext(YuContext context, boolean copyLocalVariables) {
+	public YuContext(YuContext context, boolean copyLocalVariables, boolean copyStack) {
 		this(context.getSession());
 		if(copyLocalVariables) {
 			localVariables.putAll(context.localVariables);
 		}
-		executeStack.addAll(context.executeStack);
+		if(copyStack) {
+			executeStack.addAll(context.executeStack);
+		}
 		declaringInterpreter = context.declaringInterpreter;
 	}
 	

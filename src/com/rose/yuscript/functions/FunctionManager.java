@@ -17,10 +17,7 @@ package com.rose.yuscript.functions;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import com.rose.yuscript.annotation.ScriptMethod;
@@ -31,7 +28,7 @@ import com.rose.yuscript.annotation.ScriptMethod;
  */
 public class FunctionManager {
 
-	private final Map<String,List<Function>> functionMap;
+	private final Map<String,Function> functionMap;
 
 	private final Map<String, YuModule> modules;
 
@@ -42,6 +39,9 @@ public class FunctionManager {
 		functionMap = new HashMap<>();
 		modules = new HashMap<>();
 		addFunctionsFromClass(YuMethod.class);
+		addFunction(Function_s.INSTANCE);
+		addFunction(Function_sn.INSTANCE);
+		addFunction(Function_syso.INSTANCE);
 	}
 
 	/**
@@ -83,12 +83,12 @@ public class FunctionManager {
 		addFunction(new JavaFunction(method));
 	}
 
-	/**
-	 * Remove all functions with the given name
-	 * @param name function name
-	 */
-	public void removeFunctions(String name) {
-		functionMap.remove(name);
+	public static String getFunctionID(Function function) {
+		return getFunctionID(function.getName(), function.getArgumentCount());
+	}
+
+	public static String getFunctionID(String name, int argumentCount) {
+		return name + "@" + argumentCount;
 	}
 
 	/**
@@ -96,11 +96,7 @@ public class FunctionManager {
 	 * @param function Function to remove
 	 */
 	public void removeFunction(Function function) {
-		List<Function> list = functionMap.get(function.getName());
-		if(list == null) {
-			return;
-		}
-		list.remove(function);
+		functionMap.remove(getFunctionID(function));
 	}
 
 	/**
@@ -108,24 +104,11 @@ public class FunctionManager {
 	 * @param function New function
 	 */
 	public void addFunction(Function function) {
-		List<Function> list = functionMap.get(function.getName());
-		if(list == null) {
-			list = new ArrayList<>();
-			functionMap.put(function.getName(), list);
-		}
-		if(list.contains(function)) {
-			throw new IllegalArgumentException("Function has been added");
-		}
-		list.add(function);
+		functionMap.put(getFunctionID(function),function);
 	}
 
-	/**
-	 * Get functions with the given name
-	 * @param name function name
-	 * @return list of functions with the given name
-	 */
-	public List<Function> getFunctions(String name) {
-		return functionMap.get(name);
+	public Function getFunction(String functionID) {
+		return functionMap.get(functionID);
 	}
 
 	public void putModule(YuModule module) {

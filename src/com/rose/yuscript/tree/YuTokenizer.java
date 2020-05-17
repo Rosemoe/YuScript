@@ -306,16 +306,6 @@ public class YuTokenizer {
         		return IDENTIFIER;
         	}
         }
-        if(rt == ELSE) {
-        	int extraOffset = 0;
-        	char predicate_ch = '\n';
-        	while(offset + length + extraOffset < bufferLen && isWhitespace(predicate_ch = charAt(offset + length + extraOffset))) {
-        		extraOffset++;
-        	}
-        	if(predicate_ch != '(' && !(predicate_ch == 'i' && bufferLen + length + extraOffset < bufferLen + 1 && charAt(bufferLen + length + extraOffset + 1) == 'f')) {
-        		return IDENTIFIER;
-        	}
-        }
         return rt;
     }
     

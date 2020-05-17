@@ -36,7 +36,7 @@ public final class YuTree {
 		tokenizer.setSkipWhitespace(true);
 		try {
 			root = (YuScope) parseCodeBlock(true, false);
-		} catch (Exception e) {
+		} catch (YuSyntaxError e) {
 			throw new YuSyntaxError("line: " + tokenizer.getLine() + " column: " + tokenizer.getColumn(), e);
 		}
 	}
