@@ -13,6 +13,8 @@ public class YuFunction implements YuNode, Function {
 
     private final List<String> parameterNames = new ArrayList<>();
 
+    private final List<Integer> returnPositions = new ArrayList<>();
+
     private YuCodeBlock functionBody;
 
     public String getName() {
@@ -28,11 +30,31 @@ public class YuFunction implements YuNode, Function {
     public void invoke(List<YuExpression> arguments, YuContext context, YuInterpreter interpreter) throws Throwable {
         YuContext newContext = new YuContext(context, false);
         for(int i = 0;i < getParameterCount();i++) {
-            String name = parameterNames.get(i);
+            String name = getParameterNames().get(i);
             Object value = arguments.get(i).getValue(context);
             newContext.setVariable(name, value);
         }
         interpreter.visitCodeBlock(getFunctionBody(), newContext);
+        for(Integer position : getReturnPositions()) {
+            if(position != null && position >= 0) {
+                YuExpression paramExpr = arguments.get(position);
+                if(paramExpr.getOperators().size() == 0) {
+                    YuValue valueObj = paramExpr.getChildren().get(0);
+                    if(valueObj.getType() == YuValue.TYPE_VAR) {
+                        Object value = newContext.getVariable(getParameterNames().get(position));
+                        context.setVariable(valueObj.getVariableName(), value);
+                    }
+                }
+            }
+        }
+    }
+
+    public List<Integer> getReturnPositions() {
+        return returnPositions;
+    }
+
+    public void markReturnPosition() {
+        returnPositions.add(getParameterCount() - 1);
     }
 
     public void setName(String name) {

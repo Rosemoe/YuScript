@@ -47,28 +47,48 @@ public class Main {
 			"javags(v,b,\"AbstractStringBuilder\",\"value\")\n" +
 			"syso(v)\n" +
 			"print(\"Test\")\n" +
-			"fn test.call()\n" +
-			"test.call()" +
-			"" +
-			"fn print(param)\n" +
 
+			"math.fibonacci(20,result)\n" +
+            "syso(result)\n" +
+
+			"getStringTrimmed(\"  origin   \", newStr)\n" +
+            "syso(newStr)\n" +
+
+            "fn getStringTrimmed(string,*dest)\n" +
+            "strim(string,dest)\n" +
+            "end fn\n" +
+
+			"fn print(param)\n" +
 			"test()" +
 			"syso(\"My output is:\" + param)\n" +
-
 			"fn test()\n" +
 			"syso(\"Inner function\")" +
 			"end fn\n" +
-
 			"end fn\n";
 
 	private final static String SAMPLE_MODULE = "" +
-			"fn call()\n" +
-			"syso(\"call() method is called\")" +
+			"fn fibonacci(i,*r)\n" +
+			"f(i <= 2) {\n" +
+            "s r = 1\n" +
+            "endcode\n" +
+            "}\n" +
+            "s(i-1,i)\n" +
+            "math.fibonacci(i,j)\n" +
+            "s(i-1,i)\n" +
+            "math.fibonacci(i,k)\n" +
+            "s(j+k,r)" +
 			"end fn\n";
 
+	public static int fib(int a) {
+	    if(a <= 2)
+	        return 1;
+	    return fib(a-1) + fib(a-2);
+    }
+
 	public static void main(String[] args){
+        System.out.println(fib(20));
 		YuInterpreter i = new YuInterpreter(0);
-		YuModule module = new YuModule("test");
+		YuModule module = new YuModule("math");
 		module.addTree(new YuTree(new YuTokenizer(SAMPLE_MODULE)));
 		i.getFunctionManager().putModule(module);
 		i.eval(SAMPLE_CODE);

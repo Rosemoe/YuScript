@@ -152,19 +152,31 @@ public final class YuTree {
 
 	private YuFunction parseFunctionExactly(YuFunction function) throws YuSyntaxError {
 		YuTokens next = tokenizer.nextToken();
-		while(next == IDENTIFIER) {
-			function.addParameter(tokenizer.getTokenString());
-			next = tokenizer.nextToken();
-			if(next == COMMA) {
+		while(next == IDENTIFIER || next == MULTIPLY) {
+			if(next == MULTIPLY) {
 				next = tokenizer.nextToken();
 				if(next != IDENTIFIER) {
 					throw new YuSyntaxError("Identifier expected");
 				}
+				function.addParameter(tokenizer.getTokenString());
+				function.markReturnPosition();
+			} else {
+				function.addParameter(tokenizer.getTokenString());
+			}
+			next = tokenizer.nextToken();
+			if(next == COMMA) {
+				next = tokenizer.nextToken();
+				if(next != IDENTIFIER && next != MULTIPLY) {
+					throw new YuSyntaxError("Identifier or '*' expected");
+				}
 			} else if(next == RPAREN) {
 				break;
-			} else{
-				throw new YuSyntaxError("unexpected '" + tokenizer.getTokenString() + "' here");
+			} else {
+				throw new YuSyntaxError("',' or ')' expected");
 			}
+		}
+		if(next != RPAREN) {
+			throw new YuSyntaxError("')' expected");
 		}
 		function.setFunctionBody(parseCodeBlock(true, true));
 		if(tokenizer.nextToken() != END) {

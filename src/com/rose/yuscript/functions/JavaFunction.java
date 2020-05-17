@@ -155,11 +155,11 @@ public class JavaFunction implements Function {
 			}
 			value = method.invoke(null, args);
 			if(!rt.getOperators().isEmpty()) {
-				throw new YuSyntaxError();
+				throw new YuSyntaxError("expression found at function return position");
 			}
 			YuValue val = rt.getChildren().get(0);
 			if(val.isInvert()) {
-				throw new YuSyntaxError();
+				throw new YuSyntaxError("expression found at function return position");
 			}
 			if(val.getType() == YuValue.TYPE_VAR) {
 				context.setVariable(val.getVariableName(), value);
