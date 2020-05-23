@@ -1,9 +1,6 @@
 ## YuScript   
-A script engine for iyu v3.   
 一个针对iyu v3（裕语言v3）的脚本运行器。
-Only core code supported by this project (Actually only grammar). There is some sample methods used to test.      
 本项目只包含其核心功能，即语法支持。其中只有一些样例方法。   
-If you want to have more methods, do it by yourself.   
 如果需要更多功能请自行添加。   
 ## 与官方语言的不同   
 * 代码书写自由,不需要把一个语句写在同一行  
