@@ -21,7 +21,7 @@ import io.github.rose2073.yuscript.*;
 
 /**
  * @author Rose
- *
+ * Iyu tree maker
  */
 public final class YuTree {
 	

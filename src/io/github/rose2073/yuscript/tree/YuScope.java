@@ -19,7 +19,7 @@ package io.github.rose2073.yuscript.tree;
  * @author Rose
  *
  */
-public class YuScope extends YuCodeBlock implements YuNode {
+public class YuScope extends YuCodeBlock {
 
 	public YuScope() {
 		

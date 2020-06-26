@@ -21,28 +21,80 @@ import io.github.rose2073.yuscript.util.TrieTree;
 
 /**
  * @author Rose
- *
+ * Tokenizer for iyu inputs.
+ * A tokenizer turns a input character sequence into token sequence that can be recognized by the computer
+ * Token stands for the type of this part of text.
  */
 public class YuTokenizer {
 
+    /**
+     * Keywords saver
+     */
     private static TrieTree<YuTokens> keywords;
 
     static {
         doStaticInit();
     }
 
+    /**
+     * Source of tokenizer
+     */
     private String source;
+
+    /**
+     * Length of source
+     */
     protected int bufferLen;
+
+    /**
+     * Current line position
+     */
     private int line;
+
+    /**
+     * Current column position
+     */
     private int column;
+
+    /**
+     * Current character position
+     */
     private int index;
+
+    /**
+     * Current offset in source
+     */
     protected int offset;
+
+    /**
+     * Length of current token's text in source
+     */
     protected int length;
+
+    /**
+     * Current token
+     */
     private YuTokens currToken;
+
+    /**
+     * Whether calculate line numbers
+     */
     private boolean lcCal;
+
+    /**
+     * Whether skip whitespaces in result
+     */
     private boolean skipWS;
+
+    /**
+     * Whether skip comments in result
+     */
     private boolean skipComment;
 
+    /**
+     * Create a tokenizer with given source
+     * @param src Source text
+     */
     public YuTokenizer(String src) {
         if(src == null) {
             throw new IllegalArgumentException("src can not be null");
@@ -51,6 +103,9 @@ public class YuTokenizer {
         init();
     }
 
+    /**
+     * Initialize some values
+     */
     private void init() {
         line = 0;
         column = 0;
@@ -63,18 +118,31 @@ public class YuTokenizer {
         this.bufferLen = source.length();
     }
 
+    /**
+     * Set whether calculate line numbers
+     */
     public void setCalculateLineColumn(boolean cal) {
         this.lcCal = cal;
     }
 
+    /**
+     * Set whether skip whitespaces
+     */
     public void setSkipWhitespace(boolean skip) {
         this.skipWS = skip;
     }
 
+    /**
+     * Set whether skip comments
+     */
     public void setSkipComment(boolean skip) {
         this.skipComment = skip;
     }
 
+    /**
+     * Push characters back
+     * @param length Count of characters. Must not be higher than {@link YuTokenizer#getTokenLength()}
+     */
     public void pushBack(int length) {
         if (length > getTokenLength()) {
             throw new IllegalArgumentException("pushBack length too large");

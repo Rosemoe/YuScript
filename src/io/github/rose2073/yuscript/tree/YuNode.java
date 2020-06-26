@@ -17,10 +17,18 @@ package io.github.rose2073.yuscript.tree;
 
 /**
  * @author Rose
- *
+ * Abstract syntax tree node interface for iyu
  */
 public interface YuNode {
 
+	/**
+	 * Call method of visitor to accept this node
+	 * @param <T> Parameter type
+	 * @param <R> Return type
+	 * @param visitor The visitor you want to invoke
+	 * @param value Argument for this visitor
+	 * @return Value returned by this visitor
+	 */
 	<T,R> R accept(YuTreeVisitor<R, T> visitor,T value);
 	
 }

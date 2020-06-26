@@ -17,6 +17,7 @@ package io.github.rose2073.yuscript.tree;
 
 /**
  * @author Rose
+ * A visitor to visit all iyu nodes
  */
 public interface YuTreeVisitor <R,T> {
 	R visitAssignment(YuAssignment assign,T value);

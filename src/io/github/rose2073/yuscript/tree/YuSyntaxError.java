@@ -17,31 +17,25 @@ package io.github.rose2073.yuscript.tree;
 
 /**
  * @author Rose
- *
+ * Syntax error for iyu
  */
 public class YuSyntaxError extends Error {
 
-
 	private static final long serialVersionUID = -2093795813319607171L;
-
 
 	public YuSyntaxError() {
 	}
-
 
 	public YuSyntaxError(String message) {
 		super(message);
 	}
 
-
 	public YuSyntaxError(Throwable cause) {
 		super(cause);
 	}
 
-
 	public YuSyntaxError(String message, Throwable cause) {
 		super(message, cause);
 	}
-
 
 }

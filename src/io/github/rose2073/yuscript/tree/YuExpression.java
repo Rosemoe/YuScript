@@ -26,7 +26,7 @@ import io.github.rose2073.yuscript.YuTokens;
  * @author Rose
  *
  */
-public class YuExpression extends YuValue implements YuNode {
+public class YuExpression extends YuValue {
 
 	private List<YuValue> children;
 	
