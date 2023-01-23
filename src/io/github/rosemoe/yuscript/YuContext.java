@@ -15,14 +15,13 @@
  */
 package io.github.rosemoe.yuscript;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Stack;
-import java.util.concurrent.ConcurrentHashMap;
-
 import io.github.rosemoe.yuscript.tree.YuCodeBlock;
 import io.github.rosemoe.yuscript.tree.YuFunction;
 import io.github.rosemoe.yuscript.util.LocalStack;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The context used to save and manage variables and call stack in script environment
@@ -35,12 +34,14 @@ public class YuContext {
 
     public static YuContext obtain(int session) {
         synchronized (YuContext.class) {
-            for (int i = 0;i < CACHE_SIZE;i++) {
+            for (int i = 0; i < CACHE_SIZE; i++) {
                 if (sCache[i] != null) {
                     YuContext context = sCache[i];
                     sCache[i] = null;
-                    context.session = session;
-                    context.sessionVariables = getSessionVariableMap(session);
+                    if (context.session != session) {
+                        context.session = session;
+                        context.sessionVariables = getSessionVariableMap(session);
+                    }
                     return context;
                 }
             }
@@ -49,19 +50,29 @@ public class YuContext {
     }
 
     public static void recycle(YuContext context) {
-        context.stack.clear();
-        context.usage.clear();
+        context.providedCodeBlocks.clear();
+        context.codeBlockStatus.clear();
         context.loopEnv.clear();
-        context.executeStack.clear();
+        context.functionSearchScopes.clear();
         context.declaringInterpreter = null;
-        context.sessionVariables = null;
         context.stopFlag = false;
         context.localVariables.clear();
         synchronized (YuContext.class) {
-            for (int i = 0;i < sCache.length;i++) {
+            for (int i = 0; i < CACHE_SIZE; i++) {
                 if (sCache[i] == null) {
                     sCache[i] = context;
                     break;
+                }
+            }
+        }
+    }
+
+    public static void clearSession(int session) {
+        sessionVariableMaps.remove(session);
+        synchronized (YuContext.class) {
+            for (int i = 0; i < CACHE_SIZE; i++) {
+                if (sCache[i].session == session) {
+                    sCache[i] = null;
                 }
             }
         }
@@ -92,26 +103,26 @@ public class YuContext {
 
     private Map<String, Object> sessionVariables;
     private final Map<String, Object> localVariables;
-    private final LocalStack<YuCodeBlock> stack;
-    private final LocalStack<Boolean> usage;
+    private final LocalStack<YuCodeBlock> providedCodeBlocks;
+    private final LocalStack<Boolean> codeBlockStatus;
     private int session;
     private boolean stopFlag = false;
     public final static YuCodeBlock NO_CODE_BLOCK = new YuCodeBlock();
     private YuInterpreter declaringInterpreter;
-    private final Stack<BoolWrapper> loopEnv = new Stack<>();
-    private final Stack<YuCodeBlock> executeStack = new Stack<>();
+    private final LocalStack<BoolWrapper> loopEnv = new LocalStack<>();
+    private final LocalStack<YuCodeBlock> functionSearchScopes = new LocalStack<>();
 
-    public void enterCodeBlock(YuCodeBlock codeBlock) {
-        executeStack.add(codeBlock);
+    public void pushFunctionSearchScope(YuCodeBlock codeBlock) {
+        functionSearchScopes.add(codeBlock);
     }
 
-    public void exitCodeBlock() {
-        executeStack.pop();
+    public void popFunctionSearchScope() {
+        functionSearchScopes.pop();
     }
 
     public YuFunction findFunctionFromScope(String name, int paramCount) {
-        for (int i = executeStack.size() - 1; i >= 0; i--) {
-            YuCodeBlock codeBlock = executeStack.get(i);
+        for (int i = functionSearchScopes.size() - 1; i >= 0; i--) {
+            YuCodeBlock codeBlock = functionSearchScopes.get(i);
             YuFunction function;
             if ((function = codeBlock.getFunction(name, paramCount)) != null) {
                 return function;
@@ -132,9 +143,9 @@ public class YuContext {
      *
      * @param block code block attach to current statement
      */
-    public void addCodeBlock(YuCodeBlock block) {
-        stack.push(block);
-        usage.push(false);
+    public void pushCodeBlock(YuCodeBlock block) {
+        providedCodeBlocks.push(block);
+        codeBlockStatus.push(false);
     }
 
     /**
@@ -173,7 +184,7 @@ public class YuContext {
      * @return whether used
      */
     public boolean isCodeBlockUsed() {
-        return usage.peek();
+        return codeBlockStatus.peek();
     }
 
     /**
@@ -182,19 +193,19 @@ public class YuContext {
      * @return code block available
      */
     public boolean hasCodeBlock() {
-        return (!stack.isEmpty()) && stack.peek() != NO_CODE_BLOCK;
+        return (!providedCodeBlocks.isEmpty()) && providedCodeBlocks.peek() != NO_CODE_BLOCK;
     }
 
     /**
      * Get code block attached to current statement
      *
-     * @return Code block near by current statement
+     * @return Code block next to current statement
      */
     public YuCodeBlock getCodeBlock() {
-        YuCodeBlock block = hasCodeBlock() ? stack.peek() : null;
+        YuCodeBlock block = hasCodeBlock() ? providedCodeBlocks.peek() : null;
         if (block != null) {
-            usage.pop();
-            usage.push(true);
+            codeBlockStatus.pop();
+            codeBlockStatus.push(true);
         }
         return block;
     }
@@ -203,8 +214,8 @@ public class YuContext {
      * Exit from a code block
      */
     public void popCodeBlock() {
-        stack.pop();
-        usage.pop();
+        providedCodeBlocks.pop();
+        codeBlockStatus.pop();
     }
 
     /**
@@ -236,15 +247,15 @@ public class YuContext {
     }
 
     /**
-     * Create a empty context with the given session
+     * Create an empty context with the given session
      *
      * @param session Session for variable management
      */
     public YuContext(int session) {
         sessionVariables = getSessionVariableMap(session);
         localVariables = new HashMap<>();
-        stack = new LocalStack<>();
-        usage = new LocalStack<>();
+        providedCodeBlocks = new LocalStack<>();
+        codeBlockStatus = new LocalStack<>();
         this.session = session;
     }
 
@@ -265,7 +276,7 @@ public class YuContext {
             localVariables.putAll(context.localVariables);
         }
         if (copyStack) {
-            executeStack.addAll(context.executeStack);
+            functionSearchScopes.addAll(context.functionSearchScopes);
         }
         declaringInterpreter = context.declaringInterpreter;
     }

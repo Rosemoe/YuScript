@@ -24,6 +24,11 @@ import java.util.Arrays;
  */
 public class MyCharacter {
 
+    static {
+        initMap();
+    }
+
+
     /**
      * Compressed bit set for isJavaIdentifierStart()
      */
@@ -58,7 +63,7 @@ public class MyCharacter {
     /**
      * Initialize maps
      */
-    public static void initMap() {
+    private static void initMap() {
         if (state_start != null) {
             return;
         }

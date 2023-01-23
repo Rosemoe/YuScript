@@ -37,8 +37,6 @@ import static io.github.rosemoe.yuscript.YuInterpreter.*;
 @SuppressWarnings("unused")
 public class YuMethod {
 
-
-
     /**
      * No instance
      */
@@ -65,12 +63,6 @@ public class YuMethod {
         return stringForm(obj).length();
     }
 
-    //Test reversed returning statement
-    @ScriptMethod(returnValueAtBegin = true)
-    public static int rslg(Object obj) {
-        return stringForm(obj).length();
-    }
-
     public static Long s(YuContext context, YuExpression expr) {
         return calculate(context, expr);
     }
@@ -86,7 +78,7 @@ public class YuMethod {
     }
 
     @SuppressWarnings("incomplete-switch")
-    public static Long calculate(YuContext context, YuValue expr) {
+    public static long calculate(YuContext context, YuValue expr) {
         if (expr instanceof YuExpression) {
             YuExpression e = (YuExpression) expr;
             long ans = 0;
@@ -128,35 +120,35 @@ public class YuMethod {
             }
             return ans;
         } else {
-            Object value = null;
+            long value = 0;
             switch (expr.getType()) {
                 case YuValue.TYPE_BOOL:
-                    value = expr.isInvert() == (!expr.getBool());
-                    if ((Boolean) value) {
+                    if (expr.isInvert() != expr.getBool()) {
                         value = 1;
-                    } else {
-                        value = 0;
                     }
                     break;
                 case YuValue.TYPE_NULL:
-                    value = 0;
                     break;
                 case YuValue.TYPE_NUM:
                     value = expr.getNumber();
                     break;
                 case YuValue.TYPE_STR:
-                    value = expr.getString();
+                    String str = expr.getString();
+                    value = (long) Double.parseDouble(str);
                     break;
                 case YuValue.TYPE_VAR:
-                    value = expr.getValue(context);
+                    Object varValue = expr.getValue(context);
+                    if (varValue != null) {
+                        if (varValue instanceof CharSequence) {
+                            value = (long) Double.parseDouble(varValue instanceof String ? (String) varValue : varValue.toString());
+                        } else if (varValue instanceof Number) {
+                            value = ((Number) varValue).longValue();
+                        } else {
+                            value = (long) Double.parseDouble(varValue.toString());
+                        }
+                    }
             }
-            if (value == null) {
-                return 0L;
-            } else if (value instanceof Number) {
-                return ((Number) value).longValue();
-            } else {
-                return (long) Double.parseDouble(value instanceof String ? (String) value : value.toString());
-            }
+            return value;
         }
     }
 

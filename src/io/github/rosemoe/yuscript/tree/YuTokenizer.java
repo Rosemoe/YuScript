@@ -506,7 +506,6 @@ public class YuTokenizer {
         keywords.put("false", YuTokens.FALSE);
         keywords.put("end", YuTokens.END);
         keywords.put("fn", YuTokens.FUNCTION);
-        MyCharacter.initMap();
     }
 
     protected static boolean isDigit(char c) {

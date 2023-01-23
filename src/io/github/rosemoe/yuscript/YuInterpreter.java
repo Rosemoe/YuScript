@@ -102,30 +102,41 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 
     @Override
     public Void visitCodeBlock(YuCodeBlock codeBlock, YuContext value) {
-        value.enterCodeBlock(codeBlock);
-        List<YuNode> nodes = codeBlock.getChildren();
-        for (int i = 0; i < nodes.size() && !value.isStopFlagSet(); i++) {
-            YuNode child = nodes.get(i);
-            YuCodeBlock block;
-            if (i + 1 < nodes.size()) {
-                YuNode next = nodes.get(i + 1);
-                if (next instanceof YuCodeBlock) {
-                    block = (YuCodeBlock) next;
-                } else {
-                    block = YuContext.NO_CODE_BLOCK;
-                }
-            } else {
-                block = YuContext.NO_CODE_BLOCK;
-            }
-            value.addCodeBlock(block);
-            child.accept(this, value);
-            boolean used = value.isCodeBlockUsed();
-            if (block != YuContext.NO_CODE_BLOCK && used) {
-                i++;
-            }
-            value.popCodeBlock();
+        boolean hasFunctionDefs = codeBlock.getFunctions().size() > 0;
+        if (hasFunctionDefs) {
+            value.pushFunctionSearchScope(codeBlock);
         }
-        value.exitCodeBlock();
+        List<YuNode> nodes = codeBlock.getChildren();
+        int size = nodes.size();
+        YuCodeBlock lastPushed = YuContext.NO_CODE_BLOCK;
+        value.pushCodeBlock(lastPushed);
+        if (size > 0) {
+            YuNode next = nodes.get(0);
+            for (int i = 0; i < size && !value.isStopFlagSet(); i++) {
+                YuNode child = next;
+                next = i + 1 == size ? null : nodes.get(i + 1);
+                YuCodeBlock toBeProvided = YuContext.NO_CODE_BLOCK;
+                if (next instanceof YuCodeBlock) {
+                    toBeProvided = (YuCodeBlock) next;
+                }
+                if (toBeProvided != lastPushed) {
+                    value.popCodeBlock();
+                    value.pushCodeBlock(toBeProvided);
+                    lastPushed = toBeProvided;
+                }
+                child.accept(this, value);
+                if (toBeProvided != YuContext.NO_CODE_BLOCK && value.isCodeBlockUsed()) {
+                    i++;
+                    if (i + 1 < size) {
+                        next = nodes.get(i + 1);
+                    }
+                }
+            }
+        }
+        value.popCodeBlock();
+        if (hasFunctionDefs) {
+            value.popFunctionSearchScope();
+        }
         return null;
     }
 

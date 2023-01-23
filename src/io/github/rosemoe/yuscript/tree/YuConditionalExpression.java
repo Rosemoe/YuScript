@@ -69,7 +69,7 @@ public class YuConditionalExpression implements YuNode {
 
     @SuppressWarnings("incomplete-switch")
     public boolean getValue(YuContext context) {
-        boolean condition = getChildren().get(0).getValue(context);
+        boolean condition = children.get(0).getValue(context);
         loop:
         for (int i = 0; i < operators.size(); i++) {
             YuTokens operator = operators.get(i);

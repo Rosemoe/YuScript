@@ -15,7 +15,6 @@
  */
 package io.github.rosemoe.yuscript;
 
-import io.github.rosemoe.yuscript.functions.Function_s;
 import io.github.rosemoe.yuscript.functions.YuModule;
 import io.github.rosemoe.yuscript.tree.YuTokenizer;
 import io.github.rosemoe.yuscript.tree.YuTree;
@@ -25,37 +24,22 @@ import io.github.rosemoe.yuscript.tree.YuTree;
  */
 public class Main {
 
-    private final static String SAMPLE_CODE = "math.fibonacci(25,result)";
-
-    private static int fib(int i) {
-        if (i <= 2) {
-            return 1;
-        }
-        return fib(i - 1) + fib(i - 2);
-    }
+    private final static String SAMPLE_CODE = "math.fib(25,result)";
 
     private final static String SAMPLE_MODULE = "" +
-            "fn fibonacci(i,*r)\n" +
+            "fn fib(i,*r)\n" +
             "f(i <= 2) {\n" +
             "s r = 1\n" +
             "endcode\n" +
             "}\n" +
             "s(i-1,i)\n" +
-            "math.fibonacci(i,j)\n" +
+            "math.fib(i,j)\n" +
             "s(i-1,i)\n" +
-            "math.fibonacci(i,k)\n" +
+            "math.fib(i,k)\n" +
             "s(j+k,r)" +
-            "end fn\n" +
-            "" +
-            "fn abs(val,*dest)\n" +
-            "f(val < 0)\n { \n" +
-            "s(0 - val,dest)" +
-            "}\nelse\n{" +
-            "s dest = val\n" +
-            "}\n" +
             "end fn\n";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Throwable {
         //Create new interpreter
         YuInterpreter i = new YuInterpreter(0);
         //Create new module 'math'
@@ -70,11 +54,10 @@ public class Main {
         //Evaluate the syntax tree
         i.eval(tree);
         System.out.println((System.nanoTime() - startTime) / 1e6 + "ms");
-
         startTime = System.nanoTime();
-        fib(25);
+        //Evaluate the syntax tree
+        i.eval(tree);
         System.out.println((System.nanoTime() - startTime) / 1e6 + "ms");
-
     }
 
 }

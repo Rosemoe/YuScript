@@ -78,12 +78,25 @@ public class YuCondition implements YuNode {
     }
 
     public static double getDouble(Object value) {
+        if (value == null) {
+            return 0d;
+        }
         if (value instanceof Number) {
             return ((Number) value).doubleValue();
         } else {
             String str = YuInterpreter.stringForm(value);
             return str.contains(".") ? Double.parseDouble(str) : Long.parseLong(str);
         }
+    }
+
+    private static boolean compareLessOrEqual(YuContext context, YuExpression left, YuExpression right) {
+        Object leftValue = left.getValue(context);
+        Object rightValue = right.getValue(context);
+        if (leftValue instanceof Long && rightValue instanceof Long) {
+            // Fast comparing
+            return (Long) leftValue <= (Long) rightValue;
+        }
+        return getDouble(leftValue) <= getDouble(rightValue);
     }
 
     @SuppressWarnings("incomplete-switch")
@@ -100,7 +113,7 @@ public class YuCondition implements YuNode {
                     case GT:
                         return getDouble(left.getValue(context)) > getDouble(right.getValue(context));
                     case LTEQ:
-                        return getDouble(left.getValue(context)) <= getDouble(right.getValue(context));
+                        return compareLessOrEqual(context, left, right);
                     case GTEQ:
                         return getDouble(left.getValue(context)) >= getDouble(right.getValue(context));
                     case STARTS_WITH:

@@ -51,8 +51,9 @@ public class YuFunction implements YuNode, Function {
             newContext.setVariable(name, value);
         }
         interpreter.visitCodeBlock(getFunctionBody(), newContext);
-        for (int i = 0; i < getReturnPositions().size(); i++) {
-            Integer position = getReturnPositions().get(i);
+        List<Integer> returnPositions = getReturnPositions();
+        for (int i = 0; i < returnPositions.size(); i++) {
+            Integer position = returnPositions.get(i);
             YuExpression paramExpr = arguments.get(position);
             if (paramExpr.getOperators().size() == 0) {
                 YuValue valueObj = paramExpr.getChildren().get(0);

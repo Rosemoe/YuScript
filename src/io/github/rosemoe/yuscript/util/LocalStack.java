@@ -46,8 +46,8 @@ import java.util.EmptyStackException;
  * <pre>   {@code
  *   Deque<Integer> stack = new ArrayDeque<Integer>();}</pre>
  *
- * @author  Jonathan Payne
- * @since   1.0
+ * @author Jonathan Payne
+ * @since 1.0
  */
 public class LocalStack<E> extends ArrayList<E> {
     /**
@@ -63,9 +63,9 @@ public class LocalStack<E> extends ArrayList<E> {
      * <blockquote><pre>
      * addElement(item)</pre></blockquote>
      *
-     * @param   item   the item to be pushed onto this stack.
-     * @return  the {@code item} argument.
-     * @see     java.util.Vector#addElement
+     * @param item the item to be pushed onto this stack.
+     * @return the {@code item} argument.
+     * @see java.util.Vector#addElement
      */
     public E push(E item) {
         add(item);
@@ -77,13 +77,13 @@ public class LocalStack<E> extends ArrayList<E> {
      * Removes the object at the top of this stack and returns that
      * object as the value of this function.
      *
-     * @return  The object at the top of this stack (the last item
-     *          of the {@code Vector} object).
-     * @throws EmptyStackException  if this stack is empty.
+     * @return The object at the top of this stack (the last item
+     * of the {@code Vector} object).
+     * @throws EmptyStackException if this stack is empty.
      */
     public E pop() {
-        E       obj;
-        int     len = size();
+        E obj;
+        int len = size();
 
         obj = peek();
         remove(len - 1);
@@ -95,12 +95,12 @@ public class LocalStack<E> extends ArrayList<E> {
      * Looks at the object at the top of this stack without removing it
      * from the stack.
      *
-     * @return  the object at the top of this stack (the last item
-     *          of the {@code Vector} object).
-     * @throws  EmptyStackException  if this stack is empty.
+     * @return the object at the top of this stack (the last item
+     * of the {@code Vector} object).
+     * @throws EmptyStackException if this stack is empty.
      */
     public E peek() {
-        int     len = size();
+        int len = size();
 
         if (len == 0)
             throw new EmptyStackException();
@@ -110,8 +110,8 @@ public class LocalStack<E> extends ArrayList<E> {
     /**
      * Tests if this stack is empty.
      *
-     * @return  {@code true} if and only if this stack contains
-     *          no items; {@code false} otherwise.
+     * @return {@code true} if and only if this stack contains
+     * no items; {@code false} otherwise.
      */
     public boolean empty() {
         return size() == 0;
@@ -126,10 +126,10 @@ public class LocalStack<E> extends ArrayList<E> {
      * method is used to compare {@code o} to the
      * items in this stack.
      *
-     * @param   o   the desired object.
-     * @return  the 1-based position from the top of the stack where
-     *          the object is located; the return value {@code -1}
-     *          indicates that the object is not on the stack.
+     * @param o the desired object.
+     * @return the 1-based position from the top of the stack where
+     * the object is located; the return value {@code -1}
+     * indicates that the object is not on the stack.
      */
     public int search(Object o) {
         int i = lastIndexOf(o);
