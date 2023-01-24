@@ -48,12 +48,15 @@ public class FunctionManager {
 
     private final Map<String, YuModule> modules;
 
+    private final List<YuModule> modulePool;
+
     /**
      * Create a FunctionManager and add all basic functions
      */
     public FunctionManager() {
         functionMap = new HashMap<>();
         modules = new HashMap<>();
+        modulePool = new ArrayList<>();
         try {
             addFunctionsFromClass(YuMethod.class);
         } catch (NoSuchMethodException | IllegalAccessException e) {
@@ -142,8 +145,32 @@ public class FunctionManager {
         return null;
     }
 
-    public void putModule(YuModule module) {
-        modules.put(module.getName(), module);
+    public void addModule(YuModule module) {
+        YuModule old = modules.put(module.getName(), module);
+        if (old == null) {
+            modulePool.add(module);
+            return;
+        }
+        for (int i = 0; i < modulePool.size(); i++) {
+            if (old.getName().equals(modulePool.get(i).getName())) {
+                modulePool.set(i, module);
+            }
+        }
+    }
+
+    public int getModuleId(String name) {
+        YuModule module = getModule(name);
+        if (module != null) {
+            return modulePool.indexOf(module);
+        }
+        return -1;
+    }
+
+    public YuModule getModule(int moduleId) {
+        if (moduleId < 0 || moduleId >= modulePool.size()) {
+            return null;
+        }
+        return modulePool.get(moduleId);
     }
 
     public YuModule getModule(String name) {

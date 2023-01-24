@@ -50,13 +50,7 @@ public class YuContext {
     }
 
     public static void recycle(YuContext context) {
-        context.providedCodeBlocks.clear();
-        context.codeBlockStatus.clear();
-        context.loopEnv.clear();
-        context.functionSearchScopes.clear();
-        context.declaringInterpreter = null;
-        context.stopFlag = false;
-        context.localVariables.clear();
+        context.reset();
         synchronized (YuContext.class) {
             for (int i = 0; i < CACHE_SIZE; i++) {
                 if (sCache[i] == null) {
@@ -367,6 +361,16 @@ public class YuContext {
             throw new IllegalArgumentException("two or more dots in name is a syntax error");
         }
         return getVariable(fullName.substring(0, dot), fullName.substring(dot + 1));
+    }
+    
+    public void reset() {
+        providedCodeBlocks.clear();
+        codeBlockStatus.clear();
+        loopEnv.clear();
+        functionSearchScopes.clear();
+        declaringInterpreter = null;
+        stopFlag = false;
+        localVariables.clear();
     }
 
 }

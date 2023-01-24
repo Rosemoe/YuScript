@@ -47,7 +47,7 @@ public class Main {
         //Add methods from tree
         module.addTree(new YuTree(new YuTokenizer(SAMPLE_MODULE)));
         //Add module to manager
-        i.getFunctionManager().putModule(module);
+        i.getFunctionManager().addModule(module);
         //Parse syntax tree
         YuTree tree = new YuTree(new YuTokenizer(SAMPLE_CODE));
         long startTime = System.nanoTime();

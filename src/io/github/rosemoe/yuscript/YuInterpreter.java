@@ -297,28 +297,32 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 
     @Override
     public Void visitModuleFunctionCall(YuModuleFunctionCall call, YuContext value) {
-        YuModule module = getFunctionManager().getModule(call.getModuleName());
+        int resolvedId = call.getResolvedModuleId();
+        if (resolvedId == -1) {
+            resolvedId = functionManager.getModuleId(call.getModuleName());
+            call.setResolvedModuleId(resolvedId);
+        }
+        YuModule module = functionManager.getModule(resolvedId);
         if (module == null) {
             throw new YuSyntaxError("module '" + call.getModuleName() + "' not found");
         }
         Function function = module.getFunction(call.getFunctionName(), call.getArguments().size());
-        if (function != null) {
-            try {
-                function.invoke(call.getArguments(), value, this);
-            } catch (Throwable e) {
-                throw new Error("Exception occurred in function(custom) call", e);
-            }
-            return null;
-        }
-        function = module.getFunction(call.getFunctionName(), -1);
-        if (function != null) {
-            try {
-                function.invoke(call.getArguments(), value, this);
-            } catch (Throwable e) {
-                throw new Error("Exception occurred in function(custom) call", e);
-            }
-            return null;
+        if (!invokeModuleFunction(function, call, value)) {
+            function = module.getFunction(call.getFunctionName(), -1);
+            invokeModuleFunction(function, call, value);
         }
         return null;
+    }
+
+    private boolean invokeModuleFunction(Function function, YuModuleFunctionCall call, YuContext value) {
+        if (function != null) {
+            try {
+                function.invoke(call.getArguments(), value, this);
+            } catch (Throwable e) {
+                throw new Error("Exception occurred in function(custom) call", e);
+            }
+            return true;
+        }
+        return false;
     }
 }

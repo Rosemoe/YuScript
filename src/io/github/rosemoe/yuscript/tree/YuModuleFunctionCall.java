@@ -4,12 +4,22 @@ public class YuModuleFunctionCall extends YuFunctionCall {
 
     private String moduleName;
 
+    private int resolvedModuleId = -1;
+
     public void setModuleName(String moduleName) {
         this.moduleName = moduleName;
     }
 
     public String getModuleName() {
         return moduleName;
+    }
+
+    public void setResolvedModuleId(int resolvedModuleId) {
+        this.resolvedModuleId = resolvedModuleId;
+    }
+
+    public int getResolvedModuleId() {
+        return resolvedModuleId;
     }
 
     @Override
