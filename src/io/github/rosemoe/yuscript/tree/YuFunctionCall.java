@@ -15,6 +15,8 @@
  */
 package io.github.rosemoe.yuscript.tree;
 
+import io.github.rosemoe.yuscript.functions.Function;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +27,9 @@ public class YuFunctionCall implements YuNode {
 
     private String functionName;
 
-    private List<YuExpression> arguments;
+    public List<YuExpression> arguments;
+
+    public Function resolvedFunction;
 
     @Override
     public <T, R> R accept(YuTreeVisitor<R, T> visitor, T value) {

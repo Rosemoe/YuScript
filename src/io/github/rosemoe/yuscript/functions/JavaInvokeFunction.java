@@ -189,7 +189,7 @@ public class JavaInvokeFunction implements Function {
                 throw new YuSyntaxError("expression found at function return position");
             }
             if (val.getType() == YuValue.TYPE_VAR) {
-                context.setVariable(val.getVariableName(), value);
+                context.setVariable(val.variablePrefix, val.variableKey, value);
             }
         } else {
             for (int i = 0; i < params.length; i++) {

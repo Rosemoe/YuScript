@@ -19,6 +19,7 @@ import io.github.rosemoe.yuscript.tree.YuCodeBlock;
 import io.github.rosemoe.yuscript.tree.YuFunction;
 import io.github.rosemoe.yuscript.util.LocalStack;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,20 +31,19 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class YuContext {
     private final static int CACHE_SIZE = 32;
+    private static int cacheCount;
     private final static YuContext[] sCache = new YuContext[CACHE_SIZE];
 
     public static YuContext obtain(int session) {
         synchronized (YuContext.class) {
-            for (int i = 0; i < CACHE_SIZE; i++) {
-                if (sCache[i] != null) {
-                    YuContext context = sCache[i];
-                    sCache[i] = null;
-                    if (context.session != session) {
-                        context.session = session;
-                        context.sessionVariables = getSessionVariableMap(session);
-                    }
-                    return context;
+            if (cacheCount > 0) {
+                YuContext context = sCache[--cacheCount];
+                sCache[cacheCount] = null;
+                if (context.session != session) {
+                    context.session = session;
+                    context.sessionVariables = getSessionVariableMap(session);
                 }
+                return context;
             }
         }
         return new YuContext(session);
@@ -52,11 +52,8 @@ public class YuContext {
     public static void recycle(YuContext context) {
         context.reset();
         synchronized (YuContext.class) {
-            for (int i = 0; i < CACHE_SIZE; i++) {
-                if (sCache[i] == null) {
-                    sCache[i] = context;
-                    break;
-                }
+            if (cacheCount < CACHE_SIZE) {
+                sCache[cacheCount++] = context;
             }
         }
     }
@@ -105,6 +102,8 @@ public class YuContext {
     private YuInterpreter declaringInterpreter;
     private final LocalStack<BoolWrapper> loopEnv = new LocalStack<>();
     private final LocalStack<YuCodeBlock> functionSearchScopes = new LocalStack<>();
+
+    private final Object[] fastLocals = new Object[26];
 
     public void pushFunctionSearchScope(YuCodeBlock codeBlock) {
         functionSearchScopes.add(codeBlock);
@@ -310,28 +309,20 @@ public class YuContext {
      * @param value  The value of variable
      */
     public void setVariable(String prefix, String name, Object value) {
-        Map<String, Object> map = getVariableMapForPrefix(prefix);
-        if (name.contains(".")) {
-            throw new IllegalArgumentException("dot in name is a syntax error");
+        if (name.length() == 1 && "s".equals(prefix)) {
+            char ch = name.charAt(0);
+            if (ch >= 'a' && ch <= 'z') {
+                fastLocals[ch - 'a'] = value;
+                return;
+            }
         }
+        System.out.println("Exceptional " + name);
+        Map<String, Object> map = getVariableMapForPrefix(prefix);
         if (value == null) {
             map.remove(name);
             return;
         }
         map.put(name, value);
-    }
-
-    public void setVariable(String fullName, Object val) {
-        int dot = fullName.indexOf(".");
-        if (dot == -1) {
-            setVariable("s", fullName, val);
-            return;
-        }
-        int lastDot = fullName.lastIndexOf(".");
-        if (dot != lastDot) {
-            throw new IllegalArgumentException("two or more dots in name is a syntax error");
-        }
-        setVariable(fullName.substring(0, dot), fullName.substring(dot + 1), val);
     }
 
     /**
@@ -342,6 +333,12 @@ public class YuContext {
      * @return The value of variable
      */
     public Object getVariable(String prefix, String name) {
+        if (name.length() == 1 && "s".equals(prefix)) {
+            char ch = name.charAt(0);
+            if (ch >= 'a' && ch <= 'z') {
+                return fastLocals[ch - 'a'];
+            }
+        }
         return getVariableMapForPrefix(prefix).get(name);
     }
 
@@ -362,7 +359,7 @@ public class YuContext {
         }
         return getVariable(fullName.substring(0, dot), fullName.substring(dot + 1));
     }
-    
+
     public void reset() {
         providedCodeBlocks.clear();
         codeBlockStatus.clear();
@@ -371,6 +368,7 @@ public class YuContext {
         declaringInterpreter = null;
         stopFlag = false;
         localVariables.clear();
+        Arrays.fill(fastLocals, null);
     }
 
 }

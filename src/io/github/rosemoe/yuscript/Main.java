@@ -24,7 +24,7 @@ import io.github.rosemoe.yuscript.tree.YuTree;
  */
 public class Main {
 
-    private final static String SAMPLE_CODE = "math.fib(25,result)";
+    private final static String SAMPLE_CODE = "math.fib(25,p)";
 
     private final static String SAMPLE_MODULE = "" +
             "fn fib(i,*r)\n" +

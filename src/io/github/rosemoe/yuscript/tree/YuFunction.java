@@ -48,7 +48,7 @@ public class YuFunction implements YuNode, Function {
         for (int i = 0; i < getParameterCount(); i++) {
             String name = getParameterNames().get(i);
             Object value = arguments.get(i).getValue(context);
-            newContext.setVariable(name, value);
+            newContext.setVariable("s", name, value);
         }
         interpreter.visitCodeBlock(getFunctionBody(), newContext);
         List<Integer> returnPositions = getReturnPositions();
@@ -58,8 +58,8 @@ public class YuFunction implements YuNode, Function {
             if (paramExpr.getOperators().size() == 0) {
                 YuValue valueObj = paramExpr.getChildren().get(0);
                 if (valueObj.getType() == YuValue.TYPE_VAR) {
-                    Object value = newContext.getVariable(getParameterNames().get(position));
-                    context.setVariable(valueObj.getVariableName(), value);
+                    Object value = newContext.getVariable("s", getParameterNames().get(position));
+                    context.setVariable(valueObj.variablePrefix, valueObj.variableKey, value);
                 }
             }
         }

@@ -181,8 +181,9 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
                 if (value.isStopFlagSet()) {
                     break;
                 }
-                if (tree.getDest().getType() == YuValue.TYPE_VAR) {
-                    value.setVariable(tree.getDest().getVariableName(), Array.get(right, i));
+                YuValue target = tree.getDest();
+                if (target.getType() == YuValue.TYPE_VAR) {
+                    value.setVariable(target.variablePrefix, target.variableKey, Array.get(right, i));
                 }
                 tree.getCodeBlock().accept(this, value);
             }
@@ -192,8 +193,9 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
                 if (value.isStopFlagSet()) {
                     break;
                 }
-                if (tree.getDest().getType() == YuValue.TYPE_VAR) {
-                    value.setVariable(tree.getDest().getVariableName(), val);
+                YuValue target = tree.getDest();
+                if (target.getType() == YuValue.TYPE_VAR) {
+                    value.setVariable(target.variablePrefix, target.variableKey, val);
                 }
                 tree.getCodeBlock().accept(this, value);
             }
@@ -206,31 +208,28 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 
     @Override
     public Void visitFunctionCall(YuFunctionCall call, YuContext value) {
-        Function function = value.findFunctionFromScope(call.getFunctionName(), call.getArguments().size());
+        Function function = call.resolvedFunction;
         if (function != null) {
-            try {
-                function.invoke(call.getArguments(), value, this);
-            } catch (Throwable e) {
-                throw new Error("Exception occurred in function(custom) call", e);
-            }
+            // Fast call
+            invokeFunction(function, call, value);
             return null;
         }
-        function = functionManager.getFunction(call.getFunctionName(), call.getArguments().size());
+        function = value.findFunctionFromScope(call.getFunctionName(), call.arguments.size());
         if (function != null) {
-            try {
-                function.invoke(call.getArguments(), value, this);
-            } catch (Throwable e) {
-                throw new Error("Exception occurred in function(custom) call", e);
-            }
+            invokeFunction(function, call, value);
+            call.resolvedFunction = function;
+            return null;
+        }
+        function = functionManager.getFunction(call.getFunctionName(), call.arguments.size());
+        if (function != null) {
+            invokeFunction(function, call, value);
+            call.resolvedFunction = function;
             return null;
         }
         function = functionManager.getFunction(call.getFunctionName(), -1);
         if (function != null) {
-            try {
-                function.invoke(call.getArguments(), value, this);
-            } catch (Throwable e) {
-                throw new Error("Exception occurred in function(custom) call", e);
-            }
+            invokeFunction(function, call, value);
+            call.resolvedFunction = function;
             return null;
         }
         throw new YuSyntaxError("no such method:" + call.getFunctionName() + " with argument count " + call.getArguments().size());
@@ -297,6 +296,12 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 
     @Override
     public Void visitModuleFunctionCall(YuModuleFunctionCall call, YuContext value) {
+        Function function = call.resolvedFunction;
+        if (function != null) {
+            // Fast call
+            invokeFunction(function, call, value);
+            return null;
+        }
         int resolvedId = call.getResolvedModuleId();
         if (resolvedId == -1) {
             resolvedId = functionManager.getModuleId(call.getModuleName());
@@ -306,18 +311,24 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
         if (module == null) {
             throw new YuSyntaxError("module '" + call.getModuleName() + "' not found");
         }
-        Function function = module.getFunction(call.getFunctionName(), call.getArguments().size());
-        if (!invokeModuleFunction(function, call, value)) {
+        function = module.getFunction(call.getFunctionName(), call.getArguments().size());
+        if (!invokeFunction(function, call, value)) {
             function = module.getFunction(call.getFunctionName(), -1);
-            invokeModuleFunction(function, call, value);
+            if (invokeFunction(function, call, value)) {
+                call.resolvedFunction = function;
+            } else {
+                throw new Error("can not find target function '" + call.getFunctionName() + "' in module '" + module.getName() + "'");
+            }
+        } else {
+            call.resolvedFunction = function;
         }
         return null;
     }
 
-    private boolean invokeModuleFunction(Function function, YuModuleFunctionCall call, YuContext value) {
+    private boolean invokeFunction(Function function, YuFunctionCall call, YuContext value) {
         if (function != null) {
             try {
-                function.invoke(call.getArguments(), value, this);
+                function.invoke(call.arguments, value, this);
             } catch (Throwable e) {
                 throw new Error("Exception occurred in function(custom) call", e);
             }

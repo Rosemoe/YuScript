@@ -139,5 +139,13 @@ public class LocalStack<E> extends ArrayList<E> {
         }
         return -1;
     }
+
+    @Override
+    public void clear() {
+        if (isEmpty()) {
+            return;
+        }
+        super.clear();
+    }
 }
 

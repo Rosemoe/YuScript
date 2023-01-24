@@ -47,7 +47,7 @@ public class Function_sn implements Function {
         if (expression.getOperators().size() == 0) {
             YuValue value = expression.getChildren().get(0);
             if (value.getType() == YuValue.TYPE_VAR) {
-                context.setVariable(value.getVariableName(), result);
+                context.setVariable(value.variablePrefix, value.variableKey, result);
             }
         }
     }
