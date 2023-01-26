@@ -25,7 +25,7 @@ public class YuValue implements YuNode {
     public final static int TYPE_VAR = 0, TYPE_NUM = 1, TYPE_STR = 2, TYPE_BOOL = 3, TYPE_NULL = 4;
 
     private String variableName;
-    public String variablePrefix;
+    public int variableType;
     public String variableKey;
     private String string;
     private Long number;
@@ -57,12 +57,24 @@ public class YuValue implements YuNode {
      */
     public void setVariableName(String variableName) {
         this.variableName = variableName;
-        if (variableName.contains(".")) {
-            int index = variableName.indexOf('.');
-            variablePrefix = variableName.substring(0, index);
+        int index = variableName.indexOf('.');
+        if (index != -1) {
+            switch (variableName.substring(0, index)) {
+                case "s":
+                    variableType = YuVariableType.LOCAL;
+                    break;
+                case "ss":
+                    variableType = YuVariableType.SESSION;
+                    break;
+                case "sss":
+                    variableType = YuVariableType.GLOBAL;
+                    break;
+                default:
+                    throw new IllegalArgumentException("unknown variable type");
+            }
             variableKey = variableName.substring(index + 1);
         } else {
-            variablePrefix = "s";
+            variableType = YuVariableType.LOCAL;
             variableKey = variableName;
         }
         type = TYPE_VAR;
@@ -155,7 +167,7 @@ public class YuValue implements YuNode {
             case TYPE_STR:
                 return string;
             case TYPE_VAR:
-                return context.getVariable(variablePrefix, variableKey);
+                return context.getVariable(variableType, variableKey);
             case TYPE_BOOL:
                 return bool;
             case TYPE_NULL:

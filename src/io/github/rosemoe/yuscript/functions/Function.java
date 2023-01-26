@@ -19,6 +19,7 @@ import java.util.List;
 
 import io.github.rosemoe.yuscript.YuContext;
 import io.github.rosemoe.yuscript.YuInterpreter;
+import io.github.rosemoe.yuscript.tree.YuCodeBlock;
 import io.github.rosemoe.yuscript.tree.YuExpression;
 
 /**
@@ -52,6 +53,6 @@ public interface Function {
      * @param interpreter Current interpreter
      * @throws Throwable If any error generated
      */
-    void invoke(List<YuExpression> arguments, YuContext context, YuInterpreter interpreter) throws Throwable;
+    void invoke(List<YuExpression> arguments, YuCodeBlock additionalCodeBlock, YuContext context, YuInterpreter interpreter) throws Throwable;
 
 }

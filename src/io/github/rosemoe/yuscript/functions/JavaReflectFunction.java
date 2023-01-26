@@ -21,6 +21,7 @@ import java.util.List;
 import io.github.rosemoe.yuscript.YuContext;
 import io.github.rosemoe.yuscript.YuInterpreter;
 import io.github.rosemoe.yuscript.annotation.ScriptMethod;
+import io.github.rosemoe.yuscript.tree.YuCodeBlock;
 import io.github.rosemoe.yuscript.tree.YuExpression;
 import io.github.rosemoe.yuscript.tree.YuSyntaxError;
 import io.github.rosemoe.yuscript.tree.YuValue;
@@ -51,7 +52,7 @@ public class JavaReflectFunction implements Function {
                     throw new IllegalArgumentException("too many arrays");
                 }
                 argCount = -1;
-            } else if (clazz != YuExpression.class && clazz != Object.class) {
+            } else if (clazz != YuExpression.class && clazz != Object.class && clazz != YuCodeBlock.class) {
                 throw new IllegalArgumentException("bad type in parameters");
             }
         }
@@ -90,7 +91,7 @@ public class JavaReflectFunction implements Function {
     }
 
     @Override
-    public void invoke(List<YuExpression> arguments, YuContext context, YuInterpreter interpreter) throws Throwable {
+    public void invoke(List<YuExpression> arguments, YuCodeBlock additionalCodeBlock, YuContext context, YuInterpreter interpreter) throws Throwable {
         Object[] args = new Object[params.length];
         if (method.getReturnType() != void.class) {
             YuExpression rt;
@@ -112,6 +113,8 @@ public class JavaReflectFunction implements Function {
                             }
                             args[i] = array;
                         }
+                    } else if (params[i] == YuCodeBlock.class) {
+                        args[i] = additionalCodeBlock;
                     } else {
                         YuExpression expr = arguments.get(pointerArgument);
                         if (params[i] == YuExpression.class) {
@@ -143,6 +146,8 @@ public class JavaReflectFunction implements Function {
                             }
                             args[i] = array;
                         }
+                    } else if (params[i] == YuCodeBlock.class) {
+                        args[i] = additionalCodeBlock;
                     } else {
                         YuExpression expr = arguments.get(pointerArgument);
                         if (params[i] == YuExpression.class) {
@@ -167,7 +172,7 @@ public class JavaReflectFunction implements Function {
                 throw new YuSyntaxError("expression found at function return position");
             }
             if (val.getType() == YuValue.TYPE_VAR) {
-                context.setVariable(val.variablePrefix, val.variableKey, value);
+                context.setVariable(val.variableType, val.variableKey, value);
             }
         } else {
             for (int i = 0; i < params.length; i++) {
@@ -181,6 +186,8 @@ public class JavaReflectFunction implements Function {
                     } else {
                         args[i] = arguments.toArray(new YuExpression[0]);
                     }
+                } else if(params[i] == YuCodeBlock.class) {
+                    args[i] = additionalCodeBlock;
                 } else {
                     args[i] = get(i >= arguments.size() ? null : arguments.get(i), params[i], context);
                 }

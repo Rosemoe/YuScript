@@ -42,13 +42,13 @@ public class YuFunction implements YuNode, Function {
     }
 
     @Override
-    public void invoke(List<YuExpression> arguments, YuContext context, YuInterpreter interpreter) throws Throwable {
+    public void invoke(List<YuExpression> arguments, YuCodeBlock additionalCodeBlock, YuContext context, YuInterpreter interpreter) throws Throwable {
         YuContext newContext = YuContext.obtain(context.getSession());
         newContext.setDeclaringInterpreter(context.getDeclaringInterpreter());
         for (int i = 0; i < getParameterCount(); i++) {
             String name = getParameterNames().get(i);
             Object value = arguments.get(i).getValue(context);
-            newContext.setVariable("s", name, value);
+            newContext.setVariable(YuVariableType.LOCAL, name, value);
         }
         interpreter.visitCodeBlock(getFunctionBody(), newContext);
         List<Integer> returnPositions = getReturnPositions();
@@ -58,8 +58,8 @@ public class YuFunction implements YuNode, Function {
             if (paramExpr.getOperators().size() == 0) {
                 YuValue valueObj = paramExpr.getChildren().get(0);
                 if (valueObj.getType() == YuValue.TYPE_VAR) {
-                    Object value = newContext.getVariable("s", getParameterNames().get(position));
-                    context.setVariable(valueObj.variablePrefix, valueObj.variableKey, value);
+                    Object value = newContext.getVariable(YuVariableType.LOCAL, getParameterNames().get(position));
+                    context.setVariable(valueObj.variableType, valueObj.variableKey, value);
                 }
             }
         }

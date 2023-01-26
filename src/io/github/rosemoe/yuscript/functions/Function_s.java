@@ -17,6 +17,7 @@ package io.github.rosemoe.yuscript.functions;
 
 import io.github.rosemoe.yuscript.YuContext;
 import io.github.rosemoe.yuscript.YuInterpreter;
+import io.github.rosemoe.yuscript.tree.YuCodeBlock;
 import io.github.rosemoe.yuscript.tree.YuExpression;
 import io.github.rosemoe.yuscript.tree.YuValue;
 
@@ -47,13 +48,13 @@ public class Function_s implements Function {
     }
 
     @Override
-    public void invoke(List<YuExpression> arguments, YuContext context, YuInterpreter interpreter) throws Throwable {
+    public void invoke(List<YuExpression> arguments, YuCodeBlock additionalCodeBlock, YuContext context, YuInterpreter interpreter) throws Throwable {
         YuExpression expression = arguments.get(1);
         Long result = YuMethod.s(context, arguments.get(0));
-        if (expression.getOperators().size() == 0) {
+        if (expression.operators.size() == 0) {
             YuValue value = expression.getChildren().get(0);
             if (value.getType() == YuValue.TYPE_VAR) {
-                context.setVariable(value.variablePrefix, value.variableKey, result);
+                context.setVariable(value.variableType, value.variableKey, result);
             }
         }
     }

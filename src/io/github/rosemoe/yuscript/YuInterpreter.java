@@ -108,32 +108,11 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
         }
         List<YuNode> nodes = codeBlock.getChildren();
         int size = nodes.size();
-        YuCodeBlock lastPushed = YuContext.NO_CODE_BLOCK;
-        value.pushCodeBlock(lastPushed);
         if (size > 0) {
-            YuNode next = nodes.get(0);
             for (int i = 0; i < size && !value.isStopFlagSet(); i++) {
-                YuNode child = next;
-                next = i + 1 == size ? null : nodes.get(i + 1);
-                YuCodeBlock toBeProvided = YuContext.NO_CODE_BLOCK;
-                if (next instanceof YuCodeBlock) {
-                    toBeProvided = (YuCodeBlock) next;
-                }
-                if (toBeProvided != lastPushed) {
-                    value.popCodeBlock();
-                    value.pushCodeBlock(toBeProvided);
-                    lastPushed = toBeProvided;
-                }
-                child.accept(this, value);
-                if (toBeProvided != YuContext.NO_CODE_BLOCK && value.isCodeBlockUsed()) {
-                    i++;
-                    if (i + 1 < size) {
-                        next = nodes.get(i + 1);
-                    }
-                }
+                nodes.get(i).accept(this, value);
             }
         }
-        value.popCodeBlock();
         if (hasFunctionDefs) {
             value.popFunctionSearchScope();
         }
@@ -183,7 +162,7 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
                 }
                 YuValue target = tree.getDest();
                 if (target.getType() == YuValue.TYPE_VAR) {
-                    value.setVariable(target.variablePrefix, target.variableKey, Array.get(right, i));
+                    value.setVariable(target.variableType, target.variableKey, Array.get(right, i));
                 }
                 tree.getCodeBlock().accept(this, value);
             }
@@ -195,7 +174,7 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
                 }
                 YuValue target = tree.getDest();
                 if (target.getType() == YuValue.TYPE_VAR) {
-                    value.setVariable(target.variablePrefix, target.variableKey, val);
+                    value.setVariable(target.variableType, target.variableKey, val);
                 }
                 tree.getCodeBlock().accept(this, value);
             }
@@ -214,13 +193,13 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
             invokeFunction(function, call, value);
             return null;
         }
-        function = value.findFunctionFromScope(call.getFunctionName(), call.arguments.size());
+        function = value.findFunctionFromScope(call.getFunctionName(), call.arguments.size() + (call.additionalCodeBlock != null ? 1 : 0));
         if (function != null) {
             invokeFunction(function, call, value);
             call.resolvedFunction = function;
             return null;
         }
-        function = functionManager.getFunction(call.getFunctionName(), call.arguments.size());
+        function = functionManager.getFunction(call.getFunctionName(), call.arguments.size() + (call.additionalCodeBlock != null ? 1 : 0));
         if (function != null) {
             invokeFunction(function, call, value);
             call.resolvedFunction = function;
@@ -279,13 +258,13 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
 
     @Override
     public Void visitCondition(YuCondition condition, YuContext value) {
-        //This will be handled by ConditionalExpression
+        // This will be handled by ConditionalExpression
         return null;
     }
 
     @Override
     public Void visitConditionalExpression(YuConditionalExpression expr, YuContext value) {
-        //This will be handled by while/for/if...
+        // This will be handled by while/for/if...
         return null;
     }
 
@@ -311,7 +290,7 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
         if (module == null) {
             throw new YuSyntaxError("module '" + call.getModuleName() + "' not found");
         }
-        function = module.getFunction(call.getFunctionName(), call.getArguments().size());
+        function = module.getFunction(call.getFunctionName(), call.arguments.size());
         if (!invokeFunction(function, call, value)) {
             function = module.getFunction(call.getFunctionName(), -1);
             if (invokeFunction(function, call, value)) {
@@ -328,7 +307,7 @@ public class YuInterpreter implements YuTreeVisitor<Void, YuContext> {
     private boolean invokeFunction(Function function, YuFunctionCall call, YuContext value) {
         if (function != null) {
             try {
-                function.invoke(call.arguments, value, this);
+                function.invoke(call.arguments, call.additionalCodeBlock, value, this);
             } catch (Throwable e) {
                 throw new Error("Exception occurred in function(custom) call", e);
             }

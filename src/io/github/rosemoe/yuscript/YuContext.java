@@ -17,9 +17,9 @@ package io.github.rosemoe.yuscript;
 
 import io.github.rosemoe.yuscript.tree.YuCodeBlock;
 import io.github.rosemoe.yuscript.tree.YuFunction;
+import io.github.rosemoe.yuscript.tree.YuVariableType;
 import io.github.rosemoe.yuscript.util.LocalStack;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -94,15 +94,12 @@ public class YuContext {
 
     private Map<String, Object> sessionVariables;
     private final Map<String, Object> localVariables;
-    private final LocalStack<YuCodeBlock> providedCodeBlocks;
-    private final LocalStack<Boolean> codeBlockStatus;
     private int session;
     private boolean stopFlag = false;
     public final static YuCodeBlock NO_CODE_BLOCK = new YuCodeBlock();
     private YuInterpreter declaringInterpreter;
     private final LocalStack<BoolWrapper> loopEnv = new LocalStack<>();
     private final LocalStack<YuCodeBlock> functionSearchScopes = new LocalStack<>();
-
     private final Object[] fastLocals = new Object[26];
 
     public void pushFunctionSearchScope(YuCodeBlock codeBlock) {
@@ -131,15 +128,6 @@ public class YuContext {
         public boolean value = false;
     }
 
-    /**
-     * Attach code block
-     *
-     * @param block code block attach to current statement
-     */
-    public void pushCodeBlock(YuCodeBlock block) {
-        providedCodeBlocks.push(block);
-        codeBlockStatus.push(false);
-    }
 
     /**
      * Enter a new loop
@@ -169,46 +157,6 @@ public class YuContext {
      */
     public void loopBreak() {
         loopEnv.peek().value = true;
-    }
-
-    /**
-     * Whether the top code block is used
-     *
-     * @return whether used
-     */
-    public boolean isCodeBlockUsed() {
-        return codeBlockStatus.peek();
-    }
-
-    /**
-     * Whether there is code block
-     *
-     * @return code block available
-     */
-    public boolean hasCodeBlock() {
-        return (!providedCodeBlocks.isEmpty()) && providedCodeBlocks.peek() != NO_CODE_BLOCK;
-    }
-
-    /**
-     * Get code block attached to current statement
-     *
-     * @return Code block next to current statement
-     */
-    public YuCodeBlock getCodeBlock() {
-        YuCodeBlock block = hasCodeBlock() ? providedCodeBlocks.peek() : null;
-        if (block != null) {
-            codeBlockStatus.pop();
-            codeBlockStatus.push(true);
-        }
-        return block;
-    }
-
-    /**
-     * Exit from a code block
-     */
-    public void popCodeBlock() {
-        providedCodeBlocks.pop();
-        codeBlockStatus.pop();
     }
 
     /**
@@ -247,8 +195,6 @@ public class YuContext {
     public YuContext(int session) {
         sessionVariables = getSessionVariableMap(session);
         localVariables = new HashMap<>();
-        providedCodeBlocks = new LocalStack<>();
-        codeBlockStatus = new LocalStack<>();
         this.session = session;
     }
 
@@ -286,38 +232,35 @@ public class YuContext {
     /**
      * Get the variable map for the given prefix
      *
-     * @param prefix The name of map
      * @return The variable map
      */
-    private Map<String, Object> getVariableMapForPrefix(String prefix) {
-        switch (prefix) {
-            case "s":
+    private Map<String, Object> getVariableMapForType(@YuVariableType int type) {
+        switch (type) {
+            case YuVariableType.LOCAL:
                 return localVariables;
-            case "ss":
+            case YuVariableType.SESSION:
                 return sessionVariables;
-            case "sss":
+            case YuVariableType.GLOBAL:
                 return globalVariables;
         }
-        throw new IllegalArgumentException("Not a valid variable type:" + prefix);
+        throw new IllegalArgumentException("Not a valid variable type:" + type);
     }
 
     /**
      * Set variable value
      *
-     * @param prefix The name of map
      * @param name   The name of variable without its map's name
      * @param value  The value of variable
      */
-    public void setVariable(String prefix, String name, Object value) {
-        if (name.length() == 1 && "s".equals(prefix)) {
+    public void setVariable(@YuVariableType int type, String name, Object value) {
+        if (type == YuVariableType.LOCAL && name.length() == 1) {
             char ch = name.charAt(0);
             if (ch >= 'a' && ch <= 'z') {
                 fastLocals[ch - 'a'] = value;
                 return;
             }
         }
-        System.out.println("Exceptional " + name);
-        Map<String, Object> map = getVariableMapForPrefix(prefix);
+        Map<String, Object> map = getVariableMapForType(type);
         if (value == null) {
             map.remove(name);
             return;
@@ -328,47 +271,28 @@ public class YuContext {
     /**
      * Get variable value
      *
-     * @param prefix The name of map
      * @param name   The name of variable without its map's name
      * @return The value of variable
      */
-    public Object getVariable(String prefix, String name) {
-        if (name.length() == 1 && "s".equals(prefix)) {
+    public Object getVariable(@YuVariableType int type, String name) {
+        if (type == YuVariableType.LOCAL && name.length() == 1) {
             char ch = name.charAt(0);
             if (ch >= 'a' && ch <= 'z') {
                 return fastLocals[ch - 'a'];
             }
         }
-        return getVariableMapForPrefix(prefix).get(name);
-    }
-
-    /**
-     * Get variable value
-     *
-     * @param fullName The full name of variable such as ss.var
-     * @return The value of variable
-     */
-    public Object getVariable(String fullName) {
-        int dot = fullName.indexOf(".");
-        if (dot == -1) {
-            return getVariable("s", fullName);
-        }
-        int lastDot = fullName.lastIndexOf(".");
-        if (dot != lastDot) {
-            throw new IllegalArgumentException("two or more dots in name is a syntax error");
-        }
-        return getVariable(fullName.substring(0, dot), fullName.substring(dot + 1));
+        return getVariableMapForType(type).get(name);
     }
 
     public void reset() {
-        providedCodeBlocks.clear();
-        codeBlockStatus.clear();
         loopEnv.clear();
         functionSearchScopes.clear();
         declaringInterpreter = null;
         stopFlag = false;
         localVariables.clear();
-        Arrays.fill(fastLocals, null);
+        System.arraycopy(EMPTY_LOCALS, 0, fastLocals, 0, 26);
     }
+
+    private final static Object[] EMPTY_LOCALS = new Object[26];
 
 }

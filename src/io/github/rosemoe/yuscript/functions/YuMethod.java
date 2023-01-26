@@ -19,8 +19,10 @@ import java.lang.reflect.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
+import java.util.List;
 
 import io.github.rosemoe.yuscript.YuContext;
+import io.github.rosemoe.yuscript.YuTokens;
 import io.github.rosemoe.yuscript.annotation.ScriptMethod;
 import io.github.rosemoe.yuscript.tree.YuCodeBlock;
 import io.github.rosemoe.yuscript.tree.YuExpression;
@@ -44,13 +46,9 @@ public class YuMethod {
     }
 
     @ScriptMethod
-    public static void t(YuContext context) {
-        if (!context.hasCodeBlock()) {
-            throw new YuSyntaxError("code block required");
-        }
+    public static void t(YuContext context, YuCodeBlock target) {
         final YuContext newContext = new YuContext(context);
-        final YuCodeBlock block = context.getCodeBlock();
-        new Thread(() -> context.getDeclaringInterpreter().visitCodeBlock(block, newContext)).start();
+        new Thread(() -> context.getDeclaringInterpreter().visitCodeBlock(target, newContext)).start();
     }
 
     @ScriptMethod
@@ -82,11 +80,14 @@ public class YuMethod {
         if (expr instanceof YuExpression) {
             YuExpression e = (YuExpression) expr;
             long ans = 0;
-            long composing = calculate(context, e.getChildren().get(0));
+            List<YuTokens> operator = e.operators;
+            List<YuValue> children = e.children;
+            long composing = calculate(context, children.get(0));
             boolean plusOrMinus = true;
-            for (int i = 0; i < e.getOperators().size(); i++) {
-                long val = calculate(context, e.getChildren().get(i + 1));
-                switch (e.getOperators().get(i)) {
+            int size = operator.size();
+            for (int i = 0; i < size; i++) {
+                long val = calculate(context, children.get(i + 1));
+                switch (operator.get(i)) {
                     case PLUS:
                         if (plusOrMinus) {
                             ans += composing;

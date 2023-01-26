@@ -29,6 +29,8 @@ public class YuFunctionCall implements YuNode {
 
     public List<YuExpression> arguments;
 
+    public YuCodeBlock additionalCodeBlock;
+
     public Function resolvedFunction;
 
     @Override
@@ -63,6 +65,14 @@ public class YuFunctionCall implements YuNode {
      */
     public String getFunctionName() {
         return functionName;
+    }
+
+    public void setAdditionalCodeBlock(YuCodeBlock additionalCodeBlock) {
+        this.additionalCodeBlock = additionalCodeBlock;
+    }
+
+    public YuCodeBlock getAdditionalCodeBlock() {
+        return additionalCodeBlock;
     }
 
 }

@@ -48,10 +48,6 @@ public final class YuTree {
         YuCodeBlock block = outside ? new YuScope() : new YuCodeBlock();
         while (tokenizer.nextToken() != YuTokens.EOF) {
             switch (tokenizer.getToken()) {
-                case LBRACE: {
-                    block.addChild(parseCodeBlock(false, false));
-                    break;
-                }
                 case RBRACE: {
                     if (!outside) {
                         return block;
@@ -142,6 +138,9 @@ public final class YuTree {
             moduleFunctionCall.setFunctionName(call.getFunctionName());
             for (YuExpression expression : call.getArguments()) {
                 moduleFunctionCall.addArgument(expression);
+            }
+            if (call.additionalCodeBlock != null) {
+                throw new YuSyntaxError("module function call can not accept code block");
             }
             return moduleFunctionCall;
         } else {
@@ -359,6 +358,12 @@ public final class YuTree {
             } else if (tokenizer.getToken() != YuTokens.COMMA) {
                 throw new YuSyntaxError("',' or ')' expected");
             }
+        }
+        next = tokenizer.nextToken();
+        if (next == YuTokens.LBRACE) {
+            call.setAdditionalCodeBlock(parseCodeBlock(false, false));
+        } else {
+            tokenizer.pushBack(tokenizer.getTokenLength());
         }
         return call;
     }

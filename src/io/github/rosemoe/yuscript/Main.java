@@ -50,14 +50,13 @@ public class Main {
         i.getFunctionManager().addModule(module);
         //Parse syntax tree
         YuTree tree = new YuTree(new YuTokenizer(SAMPLE_CODE));
-        long startTime = System.nanoTime();
-        //Evaluate the syntax tree
-        i.eval(tree);
-        System.out.println((System.nanoTime() - startTime) / 1e6 + "ms");
-        startTime = System.nanoTime();
-        //Evaluate the syntax tree
-        i.eval(tree);
-        System.out.println((System.nanoTime() - startTime) / 1e6 + "ms");
+
+        for (int t = 1;t <= 9;t++) {
+            long startTime = System.nanoTime();
+            //Evaluate the syntax tree
+            i.eval(tree);
+            System.out.println("Run #" + t + ":" + (System.nanoTime() - startTime) / 1e6 + "ms");
+        }
     }
 
 }

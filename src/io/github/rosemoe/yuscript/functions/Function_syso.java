@@ -17,6 +17,7 @@ package io.github.rosemoe.yuscript.functions;
 
 import io.github.rosemoe.yuscript.YuContext;
 import io.github.rosemoe.yuscript.YuInterpreter;
+import io.github.rosemoe.yuscript.tree.YuCodeBlock;
 import io.github.rosemoe.yuscript.tree.YuExpression;
 
 import java.text.SimpleDateFormat;
@@ -43,12 +44,18 @@ public class Function_syso implements Function {
     }
 
     @Override
-    public void invoke(List<YuExpression> arguments, YuContext context, YuInterpreter interpreter) throws Throwable {
+    public void invoke(List<YuExpression> arguments, YuCodeBlock additionalCodeBlock, YuContext context, YuInterpreter interpreter) throws Throwable {
         for (YuExpression argument : arguments) {
             System.out.print('[');
             System.out.print(FORMAT.format(System.currentTimeMillis()));
             System.out.print(']');
             System.out.println(argument.getValue(context));
+        }
+        if (additionalCodeBlock != null) {
+            System.out.print('[');
+            System.out.print(FORMAT.format(System.currentTimeMillis()));
+            System.out.print(']');
+            System.out.println(additionalCodeBlock);
         }
     }
 }

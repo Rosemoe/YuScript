@@ -20,7 +20,7 @@ package io.github.rosemoe.yuscript.tree;
  */
 public class YuAssignment implements YuNode {
 
-    private String variableType;
+    private int variableType;
     private String variableName;
     private YuExpression value;
 
@@ -57,17 +57,30 @@ public class YuAssignment implements YuNode {
         return variableName;
     }
 
-    /**
-     * @param variableType the variableType to set
-     */
-    public void setVariableType(String variableType) {
+    public void setVariableType(String variablePrefix) {
+        switch (variablePrefix) {
+            case "s":
+                variableType = YuVariableType.LOCAL;
+                break;
+            case "ss":
+                variableType = YuVariableType.SESSION;
+                break;
+            case "sss":
+                variableType = YuVariableType.GLOBAL;
+                break;
+            default:
+                throw new IllegalArgumentException("unknown variable type");
+        }
+    }
+
+    public void setVariableType(int variableType) {
         this.variableType = variableType;
     }
 
     /**
      * @return the variableType
      */
-    public String getVariableType() {
+    public int getVariableType() {
         return variableType;
     }
 

@@ -27,9 +27,9 @@ import io.github.rosemoe.yuscript.YuTokens;
  */
 public class YuExpression extends YuValue {
 
-    private List<YuValue> children;
+    public List<YuValue> children;
 
-    private List<YuTokens> operators;
+    public List<YuTokens> operators;
 
     public YuExpression() {
         children = new ArrayList<>();
